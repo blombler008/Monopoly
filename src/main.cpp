@@ -42,7 +42,6 @@
  * - loop(): Continuously checks for new RFID card scans and handles keypad events.
  */
 #include "main.hpp"
-#include "card.hpp"
 
 #include "config.hpp" 
 #include "includes.hpp"
@@ -54,12 +53,9 @@
 #include <string>
 #include <array>
 #include <cstring>
+ 
+#define tests 1
 
-CardCollection card_collection;
-
-CardCollection* get_card_collection() {
-    return &card_collection;
-}
 
 /**
  * @brief Array of pin numbers corresponding to the rows of the keypad.
@@ -189,6 +185,7 @@ void clear_rfid_callback() {
     rfid_callback = nullptr;
 }
 
+#if tests == 0
 void setup() {  
     Serial.begin(MONITOR_SPEED); // Initialize serial communication for debugging
     log_i("Starting"); // Log the start of the setup process
@@ -268,3 +265,4 @@ void loop() {
         mfrc522[i].PCD_StopCrypto1();
     }
 }
+#endif

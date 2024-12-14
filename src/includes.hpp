@@ -1,4 +1,4 @@
- 
+#pragma once
 #ifndef INCLUDES_HPP
 #define INCLUDES_HPP
 

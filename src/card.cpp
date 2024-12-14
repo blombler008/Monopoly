@@ -1,14 +1,63 @@
+#include "../src/card.hpp"
 #include "card.hpp"
 
-Card::Card(const char* uid, int number, const char* name, float balance) {
+Card::Card(const char* uid, const char* name, float balance) {
     this->uid = new char[strlen(uid) + 1]; 
     strcpy(this->uid, uid); 
     setName(name); // We can reuse the setName method to avoid code duplication
     setBalance(balance); // We can reuse the setBalance method to avoid code duplication
-    this->number = number; 
 }
 
-char* Card::getUID() const {
+Card::Card(const Card* card) {
+
+    if(card == nullptr) return; // Check if the card is null, otherwise we will get a segmentation fault
+    const char* uidPtr = card->getUID(); // Get the UID pointer
+    this->uid = new char[strlen(uidPtr) + 1]; // Allocate memory for the UID
+    strcpy(this->uid, uidPtr); // Copy the UID data
+    setName(card->getName()); // We can reuse the setName method to avoid code duplication
+    setBalance(card->getBalance()); // We can reuse the setBalance method to avoid code duplication
+    this->number = card->getNumber();
+}
+
+Card::~Card() {
+ 
+}
+
+bool Card::operator==(const Card *card)
+{
+    return operator==(*card); // Check if the memory addresses are the same
+}
+
+bool Card::operator==(const Card &card) {
+    const char* uid  = card.getUID(); 
+    int number       = card.getNumber();
+    const char* name = card.getName();
+    float balance    = card.getBalance();
+
+    const char* thisUid = getUID();
+    int thisNumber = getNumber();
+    const char* thisName = getName();
+    float thisBalance = getBalance();
+ 
+    if (strcmp(uid, thisUid) != 0) {
+        return false;
+    }
+ 
+    if (number != thisNumber) {
+        return false;
+    }
+
+    if (strcmp(name, thisName) != 0) {
+        return false;
+    }
+
+    if (balance != thisBalance) {
+        return false;
+    }
+
+    return true; 
+}
+char *Card::getUID() const {
     return uid;
 }
 
@@ -28,8 +77,16 @@ void Card::setBalance(float balance) {
     this->balance = balance;
 }
 
-void Card::setName(const char* name) {
-    delete[] this->name;
+void Card::setUID(const char *uid) { 
+    this->uid = new char[strlen(uid) + 1];
+    strcpy(this->uid, uid);
+}
+
+void Card::setNumber(int number) {
+    this->number = number;
+}
+
+void Card::setName(const char *name) { 
     this->name = new char[strlen(name) + 1];
     strcpy(this->name, name);
 }
@@ -51,7 +108,7 @@ CardCollection::~CardCollection() {
 int CardCollection::save_card(Card* card) {
     if (card_count < current_max_cards) { // Check if the card collection is not full
         card->setNumber(next_card_number++); // Set the card number and increment the counter 
-        card_collection[card_count] = *card; // Add the card to the collection
+        card_collection[card_count] = Card(card); // Add the card to the collection
         card_count++; // Increment the card count
         return card->getNumber(); // Return the card number
     } else {
@@ -60,16 +117,25 @@ int CardCollection::save_card(Card* card) {
     }
 }
 
-bool CardCollection::delete_card(int card_number) {
+bool CardCollection::delete_card(int card_number) { 
+    // Iterate over the card collection
     for (size_t i = 0; i < card_count; ++i) {
-        if (card_collection[i].getNumber() == card_number) {
-            // Shift remaining cards to fill the gap
-            for (size_t j = i; j < card_count - 1; ++j) {
-                card_collection[j] = card_collection[j + 1];
-            }
-            card_count--;
-            return true; // Card successfully deleted
+        
+        // Skip if the card number does not match
+        if (card_collection[i].getNumber() != card_number) continue;
+        Card* card = &card_collection[i]; // Get the card object
+        
+        // delete card; // Delete the card object 
+
+        // Shift remaining cards to fill the gap
+        for (size_t j = i; j < card_count - 1; ++j) {
+
+            // Move each card after the deleted card one position back in the array
+            card_collection[j] = card_collection[j + 1];  
         }
+        card_count--; // Decrement the card count
+        return true; // Card successfully deleted
+        
     }
     return false; // Card not found
 }
@@ -111,3 +177,6 @@ bool CardCollection::update_card_collection_size(int size_change) {
     current_max_cards = new_size;
     return return_value; // Size successfully updated
 }
+
+CardCollection cardCollection; 
+

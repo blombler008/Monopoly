@@ -3,7 +3,8 @@ Card* card_to_remove;
 void show_start_gui() {  
     lv_screen_switch(START_GUI); // Switch to the Start Screen 
     if(card_to_remove) {
-        delete card_to_remove; // Delete the card object if it exists
+        cardCollection.delete_card(card_to_remove->getNumber());
+        // delete card_to_remove; // Delete the card object if it exists
     }
     card_to_remove = NULL;
     

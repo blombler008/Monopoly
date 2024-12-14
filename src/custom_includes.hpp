@@ -12,4 +12,7 @@
 //KEYPAD
 #include "keypad/keypad.hpp"
 
+//RFID card handling
+#include "card.hpp"
+
 #endif

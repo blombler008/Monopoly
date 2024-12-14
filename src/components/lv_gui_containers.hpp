@@ -1,10 +1,12 @@
+#pragma once
+#ifndef LV_GUI_CONTAINERS_HPP
+#define LV_GUI_CONTAINERS_HPP
+
+
 #include "includes.hpp" 
 #include "audio/audio.hpp"
 #include "keypad/keypad.hpp"
 #include "card.hpp"
-
-#ifndef LV_GUI_CONTAINERS_HPP
-#define LV_GUI_CONTAINERS_HPP
 #define LVBG_COLOR lv_color_hex(0x080808)
 #define LVFG_COLOR lv_color_hex(0xdddddd)
 

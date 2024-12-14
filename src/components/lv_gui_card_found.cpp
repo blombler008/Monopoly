@@ -2,13 +2,14 @@
 
 // Function to save card name on Enter
 void save_card_name_on_enter(lv_event_t* e) {
-    lv_keyboard_mode_t mode = lv_keyboard_get_mode(e->target);
+    lv_obj_t* kb = (lv_obj_t*)lv_event_get_target(e);
+    lv_keyboard_mode_t mode = lv_keyboard_get_mode(kb);
     if (mode == LV_KEYBOARD_MODE_TEXT_LOWER || mode == LV_KEYBOARD_MODE_TEXT_UPPER) {
-        const char* card_name = lv_textarea_get_text(lv_keyboard_get_textarea(e->target));
+        const char* card_name = lv_textarea_get_text(lv_keyboard_get_textarea(kb));
         Card* card = static_cast<Card*>(lv_event_get_user_data(e));
         card->setName(card_name);
-        save_card(card);
-        lv_obj_add_flag(e->target, LV_OBJ_FLAG_HIDDEN);
+        cardCollection.save_card(card);
+        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
     }
 }
 

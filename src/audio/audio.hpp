@@ -1,10 +1,11 @@
+#pragma once
 #ifndef AUDIO_HPP
 #define AUDIO_HPP
 
 #define AUX_MUTE HIGH
 #define AUX_UNMUTE LOW
 
-#include "../includes.hpp"
+#include "includes.hpp"
 
 /**
  * @brief Starts audio playback of the specified song.
