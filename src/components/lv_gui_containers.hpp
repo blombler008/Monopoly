@@ -1,0 +1,89 @@
+#include "includes.hpp" 
+#include "audio/audio.hpp"
+#include "keypad/keypad.hpp"
+#include "card.hpp"
+
+#ifndef LV_GUI_CONTAINERS_HPP
+#define LV_GUI_CONTAINERS_HPP
+#define LVBG_COLOR lv_color_hex(0x080808)
+#define LVFG_COLOR lv_color_hex(0xdddddd)
+
+lv_group_t* getKeypadGroup(); 
+lv_indev_t* getKeypadIndevDevice();
+lv_timer_t* getTimer();
+void delete_timer();
+void setTimer(lv_timer_t* timer);
+/**
+ * @brief Starts the main loop for the LVGL (Light and Versatile Graphics Library) GUI.
+ * 
+ * This function initializes and starts the main loop required for the LVGL library to
+ * handle GUI updates and events. It should be called once during the setup phase of
+ * the application to ensure the GUI operates correctly.
+ */
+void lv_start_loop(void);
+
+
+/**
+ * @brief Creates the Start GUI for the application.
+ * 
+ * This function sets up the initial graphical user interface for the application,
+ * including a text label, a button, a toggle switch, a slider, and labels for the
+ * switch and slider.
+ * 
+ * The GUI components created are:
+ * - A centered text label displaying "Monopoly Banking".
+ * - A button labeled "Add Card".
+ * - A toggle switch with an associated label "Play 'Haut mit kein'Stein'".
+ * - A slider at the bottom center of the display with a range from 0 to 21, 
+ *   initially set to 18, and an animation duration of 2000 ms.
+ * - A label below the slider displaying the current slider value as a percentage.
+ * 
+ * The function also sets up event callbacks for the toggle switch and slider.
+ */
+void lv_create_start_gui(void);
+
+void clear_rfid_callback();
+
+typedef void (*RFIDCallback)(const char* uid);
+void set_rfid_callback(RFIDCallback callback);
+
+void lv_create_add_card_gui(const char* card_name);
+void lv_create_card_found_gui(Card* card);
+void lv_create_card_edit_gui(bool readOnly);
+void lv_create_remove_card_gui(Card* card);
+void lv_create_cards_gui(void);
+void lv_create_transfer_gui(void);
+void lv_create_transfer_confirm_gui(void);
+void lv_create_settings_gui(void);
+void lv_create_admin_card_gui(void);
+void lv_create_player_card_gui(void);
+
+enum GuiScreens {
+    START_GUI,
+    ADD_CARD_GUI,
+    CARD_FOUND_GUI,
+    CARD_EDIT_GUI,
+    REMOVE_CARD_GUI,
+    CARDS_GUI,
+    TRANSFER_GUI,
+    TRANSFER_CONFIRM_GUI,
+    SETTINGS_GUI,
+    ADMIN_CARD_GUI,
+    PLAYER_CARD_GUI
+};
+
+/**
+ * @brief Switches the current GUI screen to the specified screen.
+ * 
+ * This function handles the transition between different GUI screens in the application.
+ * It ensures that the appropriate GUI setup function is called based on the specified
+ * screen identifier.
+ * 
+ * @param screen The identifier of the screen to switch to.
+ * @param user_data Optional user data to pass to the GUI setup function.
+ */
+void lv_screen_switch(GuiScreens screen, void* user_data = nullptr);
+
+
+
+#endif
