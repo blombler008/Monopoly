@@ -1,9 +1,25 @@
 #include "lv_gui_containers.hpp" 
 
-lv_obj_t* slider_label;
-lv_obj_t* slider;
-lv_obj_t* sw_label;
-lv_obj_t * textInput;
+lv_obj_t* textInput;
+lv_obj_t* keyboard;
+
+
+bool hasKeybord = false;
+// Helper Functions
+void switch_to_add_card_gui() {
+    log_i("Switching to Card Add GUI");
+    const char* card_name = lv_textarea_get_text(textInput);
+    lv_screen_switch(ADD_CARD_GUI, (void*)card_name);
+}
+
+void remove_keyboard_and_clear_focus() {
+    if(hasKeybord) { 
+        lv_obj_del(keyboard);
+        keyboard = nullptr;
+    } 
+    lv_obj_clear_state(textInput, LV_STATE_FOCUSED);
+    hasKeybord = false;
+}
 
 // Event Callbacks
 static void btn1_event_cb(lv_event_t * event) {
@@ -13,9 +29,17 @@ static void btn1_event_cb(lv_event_t * event) {
 static void text_input_event_cb(lv_event_t * event) {
     lv_event_code_t code = lv_event_get_code(event);
     if(code == LV_EVENT_FOCUSED) {
-        lv_keyboard_set_textarea(lv_keyboard_create(lv_screen_active()), textInput); 
+        keyboard = lv_keyboard_create(lv_screen_active());
+        lv_keyboard_set_textarea(keyboard, textInput); 
+        hasKeybord = true;
         return;
-    }     
+    }
+
+    if(code == LV_EVENT_DEFOCUSED) {
+        remove_keyboard_and_clear_focus();
+        return;
+    }
+
     if(code == LV_EVENT_READY) {
         remove_keyboard_and_clear_focus();
         switch_to_add_card_gui();
@@ -28,18 +52,6 @@ static void screen_event_cb(lv_event_t * event) {
     if(code == LV_EVENT_CLICKED) {
         remove_keyboard_and_clear_focus();
     }
-}
-
-// Helper Functions
-static void switch_to_add_card_gui() {
-    log_i("Switching to Card Add GUI");
-    const char* card_name = lv_textarea_get_text(textInput);
-    lv_screen_switch(ADD_CARD_GUI, (void*)card_name);
-}
-
-static void remove_keyboard_and_clear_focus() {
-    lv_obj_del(lv_keyboard_get_textarea(textInput));
-    lv_obj_clear_state(textInput, LV_STATE_FOCUSED);
 }
 
 // Main Loop
