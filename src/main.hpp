@@ -23,7 +23,7 @@ class helper {
          * @param tag_size The size of the tag buffer to ensure no buffer overflow 
          *                 occurs.
          */
-        static void dump_byte_array(char* tag, MFRC522::Uid* uid, size_t tag_size);
+        static void format_uid_to_hex_string(char* tag, MFRC522::Uid* uid, size_t tag_size);
         
         /**
          * @brief Handles keypad events and triggers corresponding actions.
@@ -64,7 +64,7 @@ class helper {
  * function is crucial for preparing the hardware and software environment before entering 
  * the main operational loop of the application.
  */
-void setup();
+void setupMain();
 
 
 
@@ -87,6 +87,6 @@ void setup();
  * @warning Ensure that `NR_OF_READERS` is correctly defined and matches the number of readers connected.
  * @warning The function may need to be modified to handle additional error cases or edge conditions.
  */
-void loop();
+void loopMain();
 
 #endif

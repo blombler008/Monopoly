@@ -1,20 +1,13 @@
 #include <Arduino.h>
 #include <unity.h> 
+#include "tests.hpp" // include the header file with the test functions
 #include "card.hpp" // include the header file with the class definition
-
+ 
 Card* card1 = new Card("1234567890", "TestCard1", 100.0f);
 Card* card2 = new Card("ABCDEFGHIJK", "TestCard2", 200.0f);
-
 CardCollection cards(6);
 int numCard1 = 0;
 int numCard2 = 1;
-
-void setUp(void) {
-}
-
-void tearDown(void) {
-    // clean stuff up here 
-}
 
 void test_card12_not_equal() {
     TEST_ASSERT_FALSE(*card1 == *card2);
@@ -100,39 +93,4 @@ void test_card_collection_overflow() {
     Card* found_card = cards.find_card_by_uid(uid);
     TEST_ASSERT_NULL(found_card);
     delete overflow_card;
-}
-
-void setup() {
-    delay(2000); // service delay
-    UNITY_BEGIN();
-
-    // set stuff up here 
-
-    numCard1 = cards.save_card(card1);
-    numCard2 = cards.save_card(card2);
-
-    RUN_TEST(test_card12_not_equal);
-    RUN_TEST(test_card1_uid);
-    RUN_TEST(test_card1_number);
-    RUN_TEST(test_card1_name);
-    RUN_TEST(test_card1_balance);
-    RUN_TEST(test_card2_uid);
-    RUN_TEST(test_card2_number);
-    RUN_TEST(test_card2_name);
-    RUN_TEST(test_card2_balance);
-    RUN_TEST(test_add_card3);
-    RUN_TEST(test_delete_card4);
-    RUN_TEST(test_card_collection_overflow);
-
-    cards.delete_card(numCard1);
-    cards.delete_card(numCard2);
-
-    // delete card1;
-    // delete card2;
-
-
-    UNITY_END(); // stop unit testing
-}
-
-void loop() {
 }

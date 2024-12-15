@@ -3,7 +3,6 @@
 #define CARD_HPP
 
 #include "includes.hpp"
-
  
 class Card {
 public:

@@ -4,21 +4,45 @@ lv_obj_t* slider_label;
 lv_obj_t* slider;
 lv_obj_t* sw_label;
 lv_obj_t * textInput;
- 
+
+// Event Callbacks
 static void btn1_event_cb(lv_event_t * event) {
-    
-    log_i("Switching to Card Add GUI");
-    const char* card_name = lv_textarea_get_text(textInput);
-    lv_screen_switch(ADD_CARD_GUI, (void*)card_name);
+    switch_to_add_card_gui();
 }
 
 static void text_input_event_cb(lv_event_t * event) {
     lv_event_code_t code = lv_event_get_code(event);
     if(code == LV_EVENT_FOCUSED) {
         lv_keyboard_set_textarea(lv_keyboard_create(lv_screen_active()), textInput); 
-    }  
+        return;
+    }     
+    if(code == LV_EVENT_READY) {
+        remove_keyboard_and_clear_focus();
+        switch_to_add_card_gui();
+        return;
+    }
 }
 
+static void screen_event_cb(lv_event_t * event) {
+    lv_event_code_t code = lv_event_get_code(event);
+    if(code == LV_EVENT_CLICKED) {
+        remove_keyboard_and_clear_focus();
+    }
+}
+
+// Helper Functions
+static void switch_to_add_card_gui() {
+    log_i("Switching to Card Add GUI");
+    const char* card_name = lv_textarea_get_text(textInput);
+    lv_screen_switch(ADD_CARD_GUI, (void*)card_name);
+}
+
+static void remove_keyboard_and_clear_focus() {
+    lv_obj_del(lv_keyboard_get_textarea(textInput));
+    lv_obj_clear_state(textInput, LV_STATE_FOCUSED);
+}
+
+// Main Loop
 void displayloop(void*) { 
     while (1) {
         lv_task_handler();  // let the GUI do its work
@@ -33,12 +57,16 @@ void lv_start_loop(void) {
     xTaskCreatePinnedToCore(displayloop, "display", 20000, NULL, 2, NULL, 0); // Increase stack size to 20000
 }
 
+// GUI Creation
 void lv_create_start_gui(void) { 
     // Create a text label aligned center on top ("Monopoly Banking")
     lv_obj_t * text_label = lv_label_create(lv_screen_active());
     lv_label_set_text(text_label, "Monopoly Banking ₩"); 
     lv_obj_set_style_text_align(text_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(text_label, LV_ALIGN_CENTER, 0, -90);
+
+    // Add event handler to the screen
+    lv_obj_add_event_cb(lv_screen_active(), screen_event_cb, LV_EVENT_CLICKED, NULL);
     
     // Create a text input field
     textInput = lv_textarea_create(lv_screen_active());

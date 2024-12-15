@@ -54,7 +54,7 @@
 #include <array>
 #include <cstring>
  
-#define tests 1
+#define tests 0
 
 
 /**
@@ -184,9 +184,7 @@ void set_rfid_callback(RFIDCallback callback) {
 void clear_rfid_callback() {
     rfid_callback = nullptr;
 }
-
-#if tests == 0
-void setup() {  
+void setupMain() {  
     Serial.begin(MONITOR_SPEED); // Initialize serial communication for debugging
     log_i("Starting"); // Log the start of the setup process
  
@@ -227,7 +225,7 @@ void setup() {
 } 
 
 
-void loop() { 
+void loopMain() { 
     for(int i=0; i<NR_OF_READERS; i++) { // Iterate over the readers
         if(i>NR_OF_READERS) break; // Break if the reader index exceeds the number of readers
         delay(20); // Delay to prevent rapid scanning
@@ -252,7 +250,7 @@ void loop() {
         MFRC522::Uid uid = {0}; // Create a new UID object
         memcpy(&uid, &(mfrc522[i].uid), mfrc522[i].uid.size); // Copy the UID data
         char tag[20] = { 0 }; // Create a buffer for the tag data
-        helper::dump_byte_array(tag, &uid, sizeof(tag)); // Dump the UID data into the buffer
+        helper::format_uid_to_hex_string(tag, &uid, sizeof(tag)); // Dump the UID data into the buffer
         log_i("Reader %d(Pin %d): Good scan: %s", i, rfidCSPins[i], tag); // Log the UID data
 
         // Call the RFID callback if set
@@ -264,5 +262,12 @@ void loop() {
         mfrc522[i].PICC_HaltA();  
         mfrc522[i].PCD_StopCrypto1();
     }
+}
+#if tests == 0
+void setup() {
+    setupMain();
+}
+void loop() {
+    loopMain();
 }
 #endif
