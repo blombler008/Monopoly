@@ -105,7 +105,21 @@ CardCollection::~CardCollection() {
     delete[] card_collection;
 }
 
+bool CardCollection::is_uid_unique(const char* uid) {
+    for (size_t i = 0; i < card_count; ++i) {
+        if (strcmp(card_collection[i].getUID(), uid) == 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int CardCollection::save_card(Card* card) {
+    if (!is_uid_unique(card->getUID())) {
+        log_e("Card UID is not unique");
+        return -1; // Indicate an error
+    }
+
     if (card_count < current_max_cards) { // Check if the card collection is not full
         card->setNumber(next_card_number++); // Set the card number and increment the counter 
         card_collection[card_count] = Card(card); // Add the card to the collection
@@ -178,5 +192,5 @@ bool CardCollection::update_card_collection_size(int size_change) {
     return return_value; // Size successfully updated
 }
 
-CardCollection cardCollection; 
+CardCollection cardCollection;
 
