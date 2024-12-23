@@ -1,7 +1,6 @@
-
 #include "lv_gui_containers.hpp"
 
-void lv_create_admin_card_gui(void) {
+void lv_create_admin_card_gui_async(void* param) {
     // Create a text label aligned center on top ("Admin Card")
     lv_obj_t * text_label = lv_label_create(lv_screen_active());
     lv_label_set_text(text_label, "Admin Card");
@@ -16,4 +15,8 @@ void lv_create_admin_card_gui(void) {
     btn_label = lv_label_create(btn1);
     lv_label_set_text(btn_label, "Manage Admin Card");
     lv_obj_center(btn_label);
+}
+
+void lv_create_admin_card_gui(void) {
+    time_gui_creation_async(lv_create_admin_card_gui_async, NULL);
 }

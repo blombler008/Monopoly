@@ -24,19 +24,6 @@ class helper {
          *                 occurs.
          */
         static void format_uid_to_hex_string(char* tag, MFRC522::Uid* uid, size_t tag_size);
-        
-        /**
-         * @brief Handles keypad events and triggers corresponding actions.
-         * 
-         * This function is called whenever a keypad event occurs. It checks the state 
-         * of the key and performs actions based on the key pressed. Specifically:
-         * - If the key '1' is pressed, it starts audio playback of "intro.mp3".
-         * - If the key '2' is pressed, it starts audio playback of "Haut.mp3".
-         * - If the key '*' is pressed, it stops the audio playback.
-         * 
-         * @param key The key that triggered the event.
-         */
-        static void keypadEvent(KeypadEvent key);
 }; 
 
 

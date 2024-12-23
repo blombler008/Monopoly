@@ -30,23 +30,3 @@ void helper::format_uid_to_hex_string(char* tag, MFRC522::Uid* uid, size_t tag_s
     };
      
 }
-
-void helper::keypadEvent(KeypadEvent key){
-    char keyStateString[10];
-    int state = getKeystateString(keyStateString, key); 
-
-    lv_indev_read(getKeypadIndevDevice());
-    
-
-    if(state == PRESSED) {
-        if(key == '1') {
-            audio_playback_start("intro.mp3"); 
-        } else if(key == '2') { 
-            audio_playback_start("Haut.mp3");
-        } else if(key == '*') {
-            audio_playback_stop();
-        }
-    }
-
-    log_v("\"%c\", %s", key, keyStateString);
-} 

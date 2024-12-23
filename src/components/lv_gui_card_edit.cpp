@@ -1,7 +1,7 @@
-
 #include "lv_gui_containers.hpp"
 
-void lv_create_card_edit_gui(bool readOnly) {
+void lv_create_card_edit_gui_async(void* param) {
+    bool readOnly = *(bool*)param;
     // Create a text label aligned center on top ("Edit Card")
     lv_obj_t * text_label = lv_label_create(lv_screen_active());
     lv_label_set_text(text_label, "Edit Card");
@@ -16,4 +16,8 @@ void lv_create_card_edit_gui(bool readOnly) {
     btn_label = lv_label_create(btn1);
     lv_label_set_text(btn_label, readOnly ? "View Card" : "Save Changes");
     lv_obj_center(btn_label);
+}
+
+void lv_create_card_edit_gui(bool readOnly) {
+    time_gui_creation_async(lv_create_card_edit_gui_async, &readOnly);
 }

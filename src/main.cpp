@@ -52,8 +52,8 @@
 #include <vector>
 #include <string>
 #include <array>
-#include <cstring>
- 
+#include <cstring> 
+
 #define tests 0
 
 
@@ -203,7 +203,7 @@ void setupMain() {
     keypad_set_row_col_num(KEYPAD_ROWS, KEYPAD_COLS); // Set the number of rows and columns for the keypad
     keypad_set_pins((byte*)keypadColPins, (byte*)keypadRowPins); // Set the keypad pins
     keypad_set_layout((char*)keypadLayout); // Set the keypad layout
-    keypad_setup(helper::keypadEvent); // Set up the keypad event handler
+    keypad_setup(); // Set up the keypad event handler
     
     pinMode(SD_CS, OUTPUT); // Set the SD card chip select pin as an output
     if(SD.begin(SD_CS, *cls, num_to_mhz(4))) { // Initialize the SD card on the HSPI bus [4 MHz]
@@ -264,7 +264,7 @@ void loopMain() {
     }
 }
 #if tests == 0
-void setup() {
+void setup() { 
     setupMain();
 }
 void loop() {

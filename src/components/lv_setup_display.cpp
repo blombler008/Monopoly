@@ -127,6 +127,14 @@ void delete_timer() {
 
 void setTimer(lv_timer_t* timerF) {
     timer = timerF; // Set the timer
+} 
+
+void time_gui_creation_async(void (*gui_function)(void*), void* param) {
+    
+    unsigned long start_time = portGET_RUN_TIME_COUNTER_VALUE();
+    lv_async_call(gui_function, param);
+    unsigned long end_time = portGET_RUN_TIME_COUNTER_VALUE();
+    log_i("GUI creation time: %lu ns", (end_time - start_time)*4);
 }
 
 void lv_screen_switch(GuiScreens screen, void* user_data) {
@@ -135,7 +143,9 @@ void lv_screen_switch(GuiScreens screen, void* user_data) {
     clear_rfid_callback(); // Clear the RFID callback
 
     // Clear the current screen
-    lv_obj_clean(lv_scr_act());
+    lv_obj_clean(lv_screen_active());
+    
+    delay(10); // Delay to allow the screen to clear
 
     // Switch to the specified screen
     switch (screen) {

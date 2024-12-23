@@ -35,10 +35,12 @@ void keypad_setup(void (*listener)(char))  {
     keypad = new Keypad( keys, rowPins, colPins, rows, cols ); 
     keypad->setDebounceTime(20);
     keypad->setHoldTime(500);
-    // keypad->addEventListener(listener);
 
-    // xTaskCreate(keypadloop, "keypad", 10000, NULL, 0, NULL); 
-
+    if(listener != NULL) {
+        keypad->addEventListener(listener);
+        xTaskCreate(keypadloop, "keypad", 10000, NULL, 0, NULL); 
+    }
+   
     log_i("Keypad Initialised");
     
 }

@@ -85,7 +85,19 @@ enum GuiScreens {
  * @param user_data Optional user data to pass to the GUI setup function.
  */
 void lv_screen_switch(GuiScreens screen, void* user_data = nullptr);
+ 
+/**
+ * @brief Times the execution of a GUI creation function asynchronously.
+ * 
+ * This function measures the time taken to execute a given GUI creation function asynchronously.
+ * 
+ * @param gui_function The GUI creation function to be timed.
+ * @param param The parameter to be passed to the GUI creation function.
+ */
+void time_gui_creation_async(void (*gui_function)(void*), void* param);
 
+lv_obj_t* lv_obj_create_assert_null(lv_obj_t* obj);
 
+void lv_create_title_underline(lv_obj_t* parent, const char* title);
 
 #endif
