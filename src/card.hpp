@@ -39,7 +39,7 @@ public:
     Card* find_card_by_number(int card_number);
     Card* find_card_by_uid(const char* uid);
     bool update_card_collection_size(int size_change);
-
+    bool is_uid_unique(const char* uid);
 private:
     Card* card_collection;
     size_t card_count;
