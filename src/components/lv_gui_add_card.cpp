@@ -1,7 +1,7 @@
-#include "lv_gui_containers.hpp"
-
+#include "lv_gui_containers.hpp" 
+  
 Card* card_scanned = NULL;
-char card_name[21] = "Neue Karte";
+char card_name_add_card[21] = "Neue Karte";
 // Function to switch text every 2 seconds
 void switch_label_text(lv_timer_t * timer) {
     lv_obj_t * switch_label = (lv_obj_t *)timer->user_data;
@@ -28,7 +28,7 @@ void switch_to_start_screen(lv_event_t * e) {
 
 void rfid_card_scanned(const char* uid) {
     // Handle the scanned RFID card  
-    card_scanned = new Card(uid, card_name, 100.0f);
+    card_scanned = new Card(uid, card_name_add_card, 100.0f);
     log_i("Card: UID=%s, Number=%d, Name=%s, Balance=%.2f", card_scanned->getUID(), card_scanned->getNumber(), card_scanned->getName(), card_scanned->getBalance());
  
     // Switch to the card found GUI
@@ -41,7 +41,7 @@ void lv_create_add_card_gui_async(void* param) {
     const char* name = (const char*)param;
     if(strlen(name) > 1 && name[0] != '\0') {
         log_i("new card name: %s", name); 
-        strcpy(card_name, name); 
+        strcpy(card_name_add_card, name); 
     }
 
     lv_obj_t* src = lv_obj_create_assert_null(lv_screen_active());

@@ -44,6 +44,11 @@ void lv_start_loop(void);
  */
 void lv_create_start_gui(void);
 
+void remove_keyboard_and_clear_focus();
+void show_keyboard_on_click(lv_event_t * event, lv_obj_t* textInput);
+lv_obj_t* lv_obj_create_assert_null(lv_obj_t* obj);
+void lv_create_title_underline(lv_obj_t* parent, const char* title);
+
 void clear_rfid_callback();
 
 typedef void (*RFIDCallback)(const char* uid);
@@ -99,5 +104,5 @@ void time_gui_creation_async(void (*gui_function)(void*), void* param);
 lv_obj_t* lv_obj_create_assert_null(lv_obj_t* obj);
 
 void lv_create_title_underline(lv_obj_t* parent, const char* title);
-
+ 
 #endif
