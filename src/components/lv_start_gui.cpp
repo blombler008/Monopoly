@@ -1,4 +1,5 @@
 #include "lv_gui_containers.hpp" 
+#include "settings.h"
 
 lv_obj_t* textInput_start_gui; 
 
@@ -47,19 +48,32 @@ void lv_start_loop(void) {
 // GUI Creation
 void lv_create_start_gui_async(void*) { 
     // Create a text label aligned center on top ("Monopoly Banking")
-    lv_obj_t* src = lv_obj_create_assert_null(lv_screen_active());
+    lv_obj_t* src = lv_obj_assert_null(lv_screen_active());
     lv_create_title_underline(src, "Monopoly Banking ₩");
      
     lv_obj_add_event_cb(src, screen_event_cb, LV_EVENT_CLICKED, NULL);
     
     // Create a text input field
-    textInput_start_gui = lv_textarea_create(src);
-    lv_obj_align(textInput_start_gui, LV_ALIGN_CENTER, 0, -50); 
-    lv_textarea_set_one_line(textInput_start_gui, true);
-    lv_textarea_set_placeholder_text(textInput_start_gui, "Betrag eingeben");
-    lv_textarea_set_max_length(textInput_start_gui, 20);
-    lv_group_add_obj(getKeypadGroup(), textInput_start_gui);
-    lv_obj_add_event_cb(textInput_start_gui, text_input_event_cb, LV_EVENT_ALL, NULL);
+    // textInput_start_gui = lv_textarea_create(src);
+    // lv_obj_align(textInput_start_gui, LV_ALIGN_CENTER, 0, -50); 
+    // lv_textarea_set_one_line(textInput_start_gui, true);
+    // lv_textarea_set_placeholder_text(textInput_start_gui, "Betrag eingeben");
+    // lv_textarea_set_max_length(textInput_start_gui, 20);
+    // lv_group_add_obj(getKeypadGroup(), textInput_start_gui);
+    // lv_obj_add_event_cb(textInput_start_gui, text_input_event_cb, LV_EVENT_ALL, NULL);
+
+    // Create a Settings Button
+    lv_obj_t * btn_settings = lv_button_create(src);
+    lv_obj_add_event_cb(btn_settings, [](lv_event_t * event) {
+        log_i("Switching to Settings GUI");
+        lv_screen_switch(SETTINGS_GUI, NULL);
+    }, LV_EVENT_CLICKED, NULL);
+    lv_obj_align(btn_settings, LV_ALIGN_CENTER, 0, 50);
+    lv_obj_remove_flag(btn_settings, LV_OBJ_FLAG_PRESS_LOCK);
+
+    lv_obj_t * btn_settings_label = lv_label_create(btn_settings);
+    lv_label_set_text(btn_settings_label, "Einstellungen");
+    lv_obj_center(btn_settings_label);
 
     // Create a Button (btn1)
     lv_obj_t * btn1 = lv_button_create(src);

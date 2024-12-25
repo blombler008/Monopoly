@@ -1,7 +1,6 @@
-#include "../src/card.hpp"
 #include "card.hpp"
 
-Card::Card(const char* uid, const char* name, float balance) {
+Card::Card(const char* uid, const char* name, int32_t balance) {
     this->uid = new char[strlen(uid) + 1]; 
     strcpy(this->uid, uid); 
     setName(name); // We can reuse the setName method to avoid code duplication
@@ -69,11 +68,11 @@ char* Card::getName() const {
     return name;
 }
 
-float Card::getBalance() const {
+int32_t Card::getBalance() const {
     return balance;
 }
 
-void Card::setBalance(float balance) {
+void Card::setBalance(int32_t balance) {
     this->balance = balance;
 }
 

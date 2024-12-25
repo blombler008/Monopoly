@@ -46,7 +46,21 @@ void lv_create_start_gui(void);
 
 void remove_keyboard_and_clear_focus();
 void show_keyboard_on_click(lv_event_t * event, lv_obj_t* textInput);
-lv_obj_t* lv_obj_create_assert_null(lv_obj_t* obj);
+
+
+/**
+ * @brief Asserts that the given LittlevGL object is not NULL and is valid.
+ *
+ * This function checks if the provided LittlevGL object pointer is NULL or invalid.
+ * If the object is NULL, it logs an error message and throws a std::runtime_error.
+ * If the object is not valid, it logs an error message and throws a std::runtime_error.
+ * If the object is valid, it returns the object pointer.
+ *
+ * @param obj Pointer to the LittlevGL object to be checked.
+ * @return lv_obj_t* The same object pointer if it is not NULL and valid.
+ * @throws std::runtime_error if the object is NULL or not valid.
+ */
+lv_obj_t* lv_obj_assert_null(lv_obj_t* obj);
 void lv_create_title_underline(lv_obj_t* parent, const char* title);
 
 void clear_rfid_callback();
@@ -101,7 +115,7 @@ void lv_screen_switch(GuiScreens screen, void* user_data = nullptr);
  */
 void time_gui_creation_async(void (*gui_function)(void*), void* param);
 
-lv_obj_t* lv_obj_create_assert_null(lv_obj_t* obj);
+lv_obj_t* lv_obj_assert_null(lv_obj_t* obj);
 
 void lv_create_title_underline(lv_obj_t* parent, const char* title);
  
