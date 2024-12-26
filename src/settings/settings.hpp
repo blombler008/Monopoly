@@ -2,7 +2,7 @@
 #ifndef SETTINGS_HPP
 #define SETTINGS_HPP
 
-#include "includes.hpp"
+#include <includes/includes.hpp>
 
 struct GameSettings {
     uint8_t maxPlayers;

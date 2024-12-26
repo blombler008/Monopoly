@@ -17,7 +17,8 @@
 #ifndef LV_SETUP_DISPLAY
 #define LV_SETUP_DISPLAY
 
-#include "../includes.hpp"
+#include <utils/config.hpp>
+#include <includes/includes.hpp>
 #include "lv_gui_containers.hpp"
 
 #define TFT_FONT &lv_font_montserrat_14_n

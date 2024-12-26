@@ -1,9 +1,13 @@
 #ifndef MAIN_HPP
 #define MAIN_HPP
+ 
 
-#include "includes.hpp"
-#include "custom_includes.hpp"
-#include "card.hpp"
+#include <utils/config.hpp> 
+#include <includes/includes.hpp>
+
+#include <utils/macros.hpp>
+#include <utils/constants.hpp>
+#include <includes/custom_includes.hpp>
 
 class helper {
     public:

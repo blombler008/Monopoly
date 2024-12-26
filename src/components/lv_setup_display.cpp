@@ -92,6 +92,7 @@ void lv_setup_display(void) {
     lv_tick_set_cb(tick_wrapper); // Set the tick callback function for LVGL
     displayInstance = lv_tft_espi_create(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT, draw_buf, sizeof(draw_buf)); // Create a display using the TFT_eSPI library
     displayDriver = (lv_tft_espi_t*)lv_display_get_driver_data(displayInstance); // Get the display driver data
+  
     lv_display_set_rotation(displayInstance, LV_DISPLAY_ROTATION_270); // Set the display rotation
     displayDriver->tft->setTouch(calData); // Calibrate the touch screen using the predefined calibration data
 

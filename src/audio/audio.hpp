@@ -5,7 +5,8 @@
 #define AUX_MUTE HIGH
 #define AUX_UNMUTE LOW
 
-#include "includes.hpp"
+#include <utils/config.hpp>
+#include <includes/includes.hpp>
 
 /**
  * @brief Starts audio playback of the specified song.

@@ -43,16 +43,7 @@
  */
 #include "main.hpp"
 
-#include "config.hpp" 
-#include "includes.hpp"
-#include "macros.hpp"
-#include "constants.hpp"
-#include "custom_includes.hpp"
-
-#include <vector>
-#include <string>
-#include <array>
-#include <cstring> 
+ 
 
 #define tests 0
 

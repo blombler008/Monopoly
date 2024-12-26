@@ -1,4 +1,5 @@
-#include "lv_gui_containers.hpp"
+#include <components/lv_gui_containers.hpp> 
+
 Card* card_to_remove;
 void show_start_gui() {  
     lv_screen_switch(START_GUI); // Switch to the Start Screen 

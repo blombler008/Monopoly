@@ -1,6 +1,4 @@
-#include "lv_gui_containers.hpp" 
-#include "settings.hpp"
-
+#include <components/lv_gui_containers.hpp> 
 
 Card* card_scanned = NULL;
 const char* default_card_name_add_card = "Neue Karte";

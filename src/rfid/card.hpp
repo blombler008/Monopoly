@@ -2,7 +2,7 @@
 #ifndef CARD_HPP
 #define CARD_HPP
 
-#include "includes.hpp" 
+#include <includes/includes.hpp>
  
 class Card {
 public:
