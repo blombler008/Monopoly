@@ -212,7 +212,7 @@ void setupMain() {
     } 
  
     for(int i=0; i<NR_OF_READERS; i++) {
-        if(i>NR_OF_READERS) break; 
+         
         mfrc522[i].PCD_Init();  // Init each MFRC522 reader
         delay(4); // Wait for the reader to initialize
         log_i("Reader %d(Pin %d): ", i, rfidCSPins[i]); // Log the reader number and pin
@@ -227,7 +227,7 @@ void setupMain() {
 
 void loopMain() { 
     for(int i=0; i<NR_OF_READERS; i++) { // Iterate over the readers
-        if(i>NR_OF_READERS) break; // Break if the reader index exceeds the number of readers
+         
         delay(20); // Delay to prevent rapid scanning
 
         // Check if a new card is present

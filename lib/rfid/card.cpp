@@ -17,13 +17,12 @@ Card::Card(const Card* card) {
     setBalance(card->getBalance()); // We can reuse the setBalance method to avoid code duplication
     this->number = card->getNumber();
 }
-
+ 
 Card::~Card() {
  
 }
 
-bool Card::operator==(const Card *card)
-{
+bool Card::operator==(const Card *card) {
     return operator==(*card); // Check if the memory addresses are the same
 }
 
@@ -55,7 +54,8 @@ bool Card::operator==(const Card &card) {
     }
 
     return true; 
-}
+} 
+
 char *Card::getUID() const {
     return uid;
 }
