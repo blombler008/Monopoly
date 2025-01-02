@@ -40,11 +40,11 @@ void rfid_card_scanned(const char* uid) {
 }
 
 void lv_create_add_card_gui_async(void* param) {
-    const char* name = (const char*)param;
-    if(strlen(name) > 1 && name[0] != '\0') {
-        log_i("new card name: %s", name); 
-        strcpy(card_name_add_card, name); 
-    }
+    // const char* name = (const char*)param;
+    // if(strlen(name) > 1 && name[0] != '\0') {
+    //     log_i("new card name: %s", name); 
+    //     strcpy(card_name_add_card, name); 
+    // }
 
     lv_obj_t* src = lv_obj_assert_null(lv_screen_active());
 

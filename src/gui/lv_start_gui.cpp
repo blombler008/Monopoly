@@ -5,8 +5,12 @@ lv_obj_t* textInput_start_gui;
 // Helper Functions
 void switch_to_add_card_gui() {
     log_i("Switching to Card Add GUI");
-    const char* card_name_start_gui = lv_textarea_get_text(textInput_start_gui);
-    lv_screen_switch(ADD_CARD_GUI, (void*)card_name_start_gui);
+    // if(textInput_start_gui == NULL) {
+    //     log_e("Text Input is NULL?");
+    //     return;
+    // }
+    // const char* card_name_start_gui = lv_textarea_get_text(textInput_start_gui);
+    lv_screen_switch(ADD_CARD_GUI);
 }
 
 // Event Callbacks

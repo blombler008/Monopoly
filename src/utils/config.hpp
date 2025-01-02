@@ -1,5 +1,13 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
+
+#ifndef ota
+    #define ota 0
+#endif
+#ifndef tests
+    #define tests 0
+#endif
+
 // MONITOR SEETINGS
 #define MONITOR_SPEED MONITOR_BAUD_7
 

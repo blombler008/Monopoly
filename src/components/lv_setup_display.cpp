@@ -156,12 +156,14 @@ void lv_screen_switch(GuiScreens screen, void* user_data) {
             lv_create_start_gui();
             break;
         case ADD_CARD_GUI:
-            if(user_data) {
-                lv_create_add_card_gui((char*)user_data);
-            } else {
-                log_e("No user data provided for add card GUI");
-            } 
+            lv_create_add_card_gui(nullptr);
             break;
+            // if(user_data) {
+            //     lv_create_add_card_gui((char*)user_data);
+            // } else {
+            //     log_e("No user data provided for add card GUI");
+            // } 
+            // break;
         case CARD_FOUND_GUI:
             if (user_data) {
                 lv_create_card_found_gui((Card*)user_data);

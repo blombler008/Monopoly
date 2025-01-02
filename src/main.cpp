@@ -42,11 +42,70 @@
  * - loop(): Continuously checks for new RFID card scans and handles keypad events.
  */
 #include "main.hpp"
-
+#if ota == 1
  
+void setupOTA() {
+    
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+        Serial.println("Connection Failed! Rebooting...");
+        delay(5000);
+        ESP.restart();
+    }
 
-#define tests 0
 
+    ArduinoOTA.setHostname("esp32-monopoly");
+    ArduinoOTA.setPassword(WIFI_PASSWORD "-admin");
+    ArduinoOTA.setMdnsEnabled(true);
+    ArduinoOTA.begin();
+    
+
+    ArduinoOTA.onStart([]() {
+        String type;
+        if (ArduinoOTA.getCommand() == U_FLASH) {
+            type = "sketch";
+        } else { // U_SPIFFS
+            type = "filesystem";
+        }
+        // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+        SPIFFS.end();
+        SD.end();
+
+        Serial.println("Start updating " + type);
+    });
+
+    ArduinoOTA.onEnd([]() {
+        Serial.println("\nEnd");
+    });
+
+    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    });
+
+    ArduinoOTA.onError([](ota_error_t error) {
+        Serial.printf("Error[%u]: ", error);
+        if (error == OTA_AUTH_ERROR) {
+            Serial.println("Auth Failed");
+        } else if (error == OTA_BEGIN_ERROR) {
+            Serial.println("Begin Failed");
+        } else if (error == OTA_CONNECT_ERROR) {
+            Serial.println("Connect Failed");
+        } else if (error == OTA_RECEIVE_ERROR) {
+            Serial.println("Receive Failed");
+        } else if (error == OTA_END_ERROR) {
+            Serial.println("End Failed");
+        }
+    });
+
+    ArduinoOTA.begin();
+}
+
+void handleOTA() {
+    ArduinoOTA.handle();
+}
+ 
+#endif 
 
 /**
  * @brief Array of pin numbers corresponding to the rows of the keypad.
@@ -201,6 +260,14 @@ void setupMain() {
         audio_setup(); // Set up the audio system
         audio_start_loop();  // Start the audio loop for service 
     } 
+
+    if (SPIFFS.begin(true))  { // Initialize the SPIFFS file system
+        log_i("SPIFFS mounted"); // Log the successful mounting of SPIFFS
+    } else {
+        log_i("SPIFFS failed to mount"); // Log the failure to mount SPIFFS
+    }
+    
+    log_i("SPIFFS setup"); // Log the completion of the SPIFFS setup
  
     for(int i=0; i<NR_OF_READERS; i++) {
          
@@ -256,6 +323,22 @@ void loopMain() {
 }
 #if tests == 0
 void setup() { 
+    #if ota == 1
+        setupOTA();
+        xTaskCreate(
+            [](void*) {
+                for (;;) {
+                    handleOTA(); 
+                }
+            },
+            "OTAHandleTask",
+            8192,
+            nullptr,
+            1,
+            nullptr
+        );
+    #endif
+
     setupMain();
 }
 void loop() {
