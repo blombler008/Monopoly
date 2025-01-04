@@ -137,7 +137,9 @@ void setupOTA() {
 }
 
 void handleOTA() {
-    ArduinoOTA.handle();
+    while (true) {
+        ArduinoOTA.handle(); 
+    } 
 }
  
 #endif 
@@ -353,18 +355,7 @@ void loopMain() {
 void setup() { 
     #ifdef use_ota
         setupOTA();
-        xTaskCreate(
-            [](void*) {
-                for (;;) {
-                    handleOTA(); 
-                }
-            },
-            "OTAHandleTask",
-            8192,
-            nullptr,
-            1,
-            nullptr
-        );
+        xTaskCreate(handleOTA, "OTAHandleTask", 8192, nullptr, 5, nullptr);
     #endif
 
     setupMain();
