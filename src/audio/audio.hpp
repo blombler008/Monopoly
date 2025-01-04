@@ -59,6 +59,13 @@ void audio_setup();
 void audio_start_loop();
 
 /**
+ * @brief Stops the audio loop task.
+ *
+ * This function stops the audio loop task by suspending the task and then deleting it.
+ */
+void audio_stop_loop();
+
+/**
  * @brief Sets the audio volume to the specified level.
  * 
  * This function adjusts the volume of the audio output to the given level.

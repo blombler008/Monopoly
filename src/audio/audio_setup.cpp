@@ -3,11 +3,16 @@
 Audio audio;
 
 bool isPlaying = false;
+bool killATask = false;
 
 void audioloop(void *) {
     while (1) {
         audio.loop();
         delay(1);
+
+        if(killATask) {
+            vTaskDelete(NULL);
+        }
     } 
 }
 
@@ -48,6 +53,10 @@ void audio_setup() {
 
 void audio_start_loop() {
     xTaskCreatePinnedToCore(audioloop, "audio", 10000, NULL, 1, NULL, 1);
+}
+
+void audio_stop_loop() {
+    killATask = true;
 }
 
 void audio_set_volume(uint8_t vol) {

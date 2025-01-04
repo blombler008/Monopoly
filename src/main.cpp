@@ -42,15 +42,85 @@
  * - loop(): Continuously checks for new RFID card scans and handles keypad events.
  */
 #include "main.hpp"
-#if ota == 1
- 
+
+#ifdef use_ota
+
+unsigned int otaProgress = 0;
+unsigned int lastProgress = 0;
+unsigned int otaTotal = 0;
+
+void printProgress(void *parameter) {
+    while (true) {
+        if (otaTotal > 0 && otaProgress != lastProgress) { 
+            Serial.printf("\rProgress: %3u%%\033[K", (otaProgress * 100) / otaTotal);
+            lastProgress = otaProgress;
+
+            if (otaProgress == otaTotal) {
+                Serial.println("\nUpdate complete!");
+                vTaskDelete(NULL);
+                return;
+            }
+
+        }
+        delay(2000); // Print progress every 1 second
+    }
+}
+
+void onProgress(unsigned int progress, unsigned int total) {
+    otaProgress = progress;
+    otaTotal = total;
+}
+
+bool stopLoop = false;
+void onStart() {
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH) {
+        type = "sketch";
+    } else { // U_SPIFFS
+        type = "filesystem";
+    }
+    // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+    SPIFFS.end();
+    SD.end();
+    audio_stop_loop();
+    keypad_stop();
+    lv_stop_loop();
+    stopLoop = true;
+
+    // Create a new task to print progress
+    xTaskCreate(printProgress, "PrintProgress", 2048, NULL, 1, NULL);
+    Serial.println("Start updating " + type);
+}
+
+void onEnd() {
+    Serial.println("\nEnd");
+}
+
+void onError(ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) {
+        Serial.println("Auth Failed");
+    } else if (error == OTA_BEGIN_ERROR) {
+        Serial.println("Begin Failed");
+    } else if (error == OTA_CONNECT_ERROR) {
+        Serial.println("Connect Failed");
+    } else if (error == OTA_RECEIVE_ERROR) {
+        Serial.println("Receive Failed");
+    } else if (error == OTA_END_ERROR) {
+        Serial.println("End Failed");
+    }
+}
+
+#include <esp_wifi.h>
 void setupOTA() {
-    
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    esp_wifi_config_80211_tx_rate((wifi_interface_t)ESP_IF_WIFI_STA, WIFI_PHY_RATE_MCS7_LGI); // Set the data rate to 65 Mbps, and long GI
+    esp_wifi_set_bandwidth((wifi_interface_t)ESP_IF_WIFI_STA, WIFI_BW_HT40); // Set the bandwidth to 40 MHz
+    WiFi.setTxPower(WIFI_POWER_19_5dBm); // Max TX power in dBm (19.5 dBm)
     while (WiFi.waitForConnectResult() != WL_CONNECTED) {
         Serial.println("Connection Failed! Rebooting...");
-        delay(5000);
+        delay(500);
         ESP.restart();
     }
 
@@ -59,46 +129,11 @@ void setupOTA() {
     ArduinoOTA.setPassword(WIFI_PASSWORD "-admin");
     ArduinoOTA.setMdnsEnabled(true);
     ArduinoOTA.begin();
-    
 
-    ArduinoOTA.onStart([]() {
-        String type;
-        if (ArduinoOTA.getCommand() == U_FLASH) {
-            type = "sketch";
-        } else { // U_SPIFFS
-            type = "filesystem";
-        }
-        // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-        SPIFFS.end();
-        SD.end();
-
-        Serial.println("Start updating " + type);
-    });
-
-    ArduinoOTA.onEnd([]() {
-        Serial.println("\nEnd");
-    });
-
-    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    });
-
-    ArduinoOTA.onError([](ota_error_t error) {
-        Serial.printf("Error[%u]: ", error);
-        if (error == OTA_AUTH_ERROR) {
-            Serial.println("Auth Failed");
-        } else if (error == OTA_BEGIN_ERROR) {
-            Serial.println("Begin Failed");
-        } else if (error == OTA_CONNECT_ERROR) {
-            Serial.println("Connect Failed");
-        } else if (error == OTA_RECEIVE_ERROR) {
-            Serial.println("Receive Failed");
-        } else if (error == OTA_END_ERROR) {
-            Serial.println("End Failed");
-        }
-    });
-
-    ArduinoOTA.begin();
+    ArduinoOTA.onStart(onStart);
+    ArduinoOTA.onEnd(onEnd);
+    ArduinoOTA.onProgress(onProgress);
+    ArduinoOTA.onError(onError);
 }
 
 void handleOTA() {
@@ -158,7 +193,6 @@ SPIClass* cls = new SPIClass(HSPI);
  */
 SPIClass* vls = new SPIClass(VSPI); 
 
-   
 /**
  * @brief Initializes SPI settings with specified clock divider, bit order, and data mode.
  *
@@ -186,7 +220,6 @@ SPIClass* vls = new SPIClass(VSPI);
  * - SPI_MODE2: Clock polarity 1, Clock phase 0
  * - SPI_MODE3: Clock polarity 1, Clock phase 1
  */
-
 SPISettings spiSettings = SPISettings(SPI_CLOCK_DIV4, SPI_MSBFIRST, SPI_MODE0);
 
 /**
@@ -213,7 +246,6 @@ MFRC522_SPI spiDevice1 = MFRC522_SPI(RFID_CS1, UNUSED_PIN, vls, spiSettings);
  */
 MFRC522_SPI spiDevice2 = MFRC522_SPI(RFID_CS2, UNUSED_PIN, vls, spiSettings);  
   
-
 /**
  * @brief Array of chip select (CS) pins for RFID modules.
  * 
@@ -222,9 +254,8 @@ MFRC522_SPI spiDevice2 = MFRC522_SPI(RFID_CS2, UNUSED_PIN, vls, spiSettings);
  * RFID_CS_PINS macro.
  */
 byte rfidCSPins[] = RFID_CS_PINS;
-MFRC522 mfrc522[NR_OF_READERS] = {MFRC522(&spiDevice1),MFRC522(&spiDevice2)}; 
+MFRC522 mfrc522[NR_OF_READERS] = { MFRC522(&spiDevice1) ,MFRC522(&spiDevice2)}; 
   
-typedef void (*RFIDCallback)(const char* uid);
 RFIDCallback rfid_callback = nullptr;
 
 void set_rfid_callback(RFIDCallback callback) {
@@ -234,6 +265,7 @@ void set_rfid_callback(RFIDCallback callback) {
 void clear_rfid_callback() {
     rfid_callback = nullptr;
 }
+
 void setupMain() {  
     Serial.begin(MONITOR_SPEED); // Initialize serial communication for debugging
     log_i("Starting"); // Log the start of the setup process
@@ -242,12 +274,6 @@ void setupMain() {
     cls->begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI); // Initialize the HSPI bus
 
     lv_setup_display(); // Initialize the display using LittlevGL
-    
-    // lv_create_remove_card_gui(card1); // Create the remove card GUI for testing
-    // lv_create_add_card_gui(); // Create the add card GUI
-    
-    lv_create_start_gui(); // Create the initial graphical user interface
-    lv_start_loop(); // Start the LittlevGL loop
     log_i("TFT setup"); // Log the completion of the display setup
     
     keypad_set_row_col_num(KEYPAD_ROWS, KEYPAD_COLS); // Set the number of rows and columns for the keypad
@@ -278,6 +304,8 @@ void setupMain() {
         delay(4); // Wait for the reader to finish reading the version register 
     }
     
+    lv_create_start_gui(); // Create the initial graphical user interface
+    lv_start_loop(); // Start the LittlevGL loop
     log_i("Starting loop");
     
 } 
@@ -323,7 +351,7 @@ void loopMain() {
 }
 #if tests == 0
 void setup() { 
-    #if ota == 1
+    #ifdef use_ota
         setupOTA();
         xTaskCreate(
             [](void*) {
@@ -342,6 +370,10 @@ void setup() {
     setupMain();
 }
 void loop() {
+    if(stopLoop) {
+        return;
+    } 
+
     loopMain();
 }
 #endif

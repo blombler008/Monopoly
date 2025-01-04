@@ -12,6 +12,7 @@
 #define LVBG_COLOR lv_color_hex(0x080808)
 #define LVFG_COLOR lv_color_hex(0xdddddd)
 
+ 
 lv_group_t* getKeypadGroup(); 
 lv_indev_t* getKeypadIndevDevice();
 lv_timer_t* getTimer();
@@ -25,7 +26,7 @@ void setTimer(lv_timer_t* timer);
  * the application to ensure the GUI operates correctly.
  */
 void lv_start_loop(void);
-
+void lv_stop_loop(void);
 
 /**
  * @brief Creates the Start GUI for the application.

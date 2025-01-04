@@ -7,14 +7,23 @@ byte* rowPins;
 byte* colPins;
 
 char* keys; 
-
+bool killKPTask = false;
 Keypad* keypad;
  
 void keypadloop(void *) { 
     while (1) {
         keypad->getKeys();
         delay(1);
+
+        if(killKPTask) {
+            vTaskDelete(NULL);
+        }
+
     } 
+}
+
+void keypad_stop() {
+    killKPTask = true;
 }
 
 void keypad_set_pins(byte* rPins, byte* cPins) {

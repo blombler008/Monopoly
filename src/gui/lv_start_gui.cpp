@@ -32,12 +32,21 @@ static void screen_event_cb(lv_event_t * event) {
     }
 }
 
+bool killLVTask = false;
+void lv_stop_loop(void) {
+    killLVTask = true;
+}
+
 // Main Loop
 void displayloop(void*) { 
     while (1) {
         delay(20);
         lv_task_handler();  // let the GUI do its work
         lv_timer_handler();
+
+        if(killLVTask) { 
+            vTaskDelete(NULL);
+        }
         // lv_tick_inc(lv_timer_handler());     // tell LVGL how much time has passed
     }
 }

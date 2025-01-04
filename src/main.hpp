@@ -9,6 +9,7 @@
 #include <utils/constants.hpp>
 #include <includes/custom_includes.hpp>
 #include <helpers/helpers.hpp>
+ 
 
 /**
  * @brief Initializes the hardware and software components for the Monopoly project.
@@ -36,8 +37,6 @@
  */
 void setupMain();
 
-
-
 /**
  * @brief Main loop function that continuously checks for new RFID cards on multiple readers.
  * 
@@ -59,11 +58,14 @@ void setupMain();
  */
 void loopMain();
 
+#if ota == 1 && defined(WIFI_SSID) && defined(WIFI_PASSWORD)
+#define use_ota 1
+#endif
 
-#if ota == 1
+#ifdef use_ota
 #include <ArduinoOTA.h>
-void handleOTA()
-void setupOTA()
+void handleOTA();
+void setupOTA();
 #endif
 
 #endif
