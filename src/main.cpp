@@ -45,6 +45,7 @@
 
 #ifdef use_ota
 
+#define class_error_code_offset 4304
 unsigned int otaProgress = 0;
 unsigned int lastProgress = 0;
 unsigned int otaTotal = 0;
@@ -96,20 +97,61 @@ void onEnd() {
     Serial.println("\nEnd");
 }
 
+typedef cb_t void (*cb_t)(char);
+
 void onError(ota_error_t error) {
     Serial.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) {
-        Serial.println("Auth Failed");
-    } else if (error == OTA_BEGIN_ERROR) {
-        Serial.println("Begin Failed");
-    } else if (error == OTA_CONNECT_ERROR) {
-        Serial.println("Connect Failed");
-    } else if (error == OTA_RECEIVE_ERROR) {
-        Serial.println("Receive Failed");
-    } else if (error == OTA_END_ERROR) {
-        Serial.println("End Failed");
-    }
+
+    cb_t ota_err[] = {ota_auth_error, ota_begin_error, ota_connect_error, ota_receive_error, ota_end_error};
+
+    ota_err[error](f("Error Code: 0x%8d", error + class_error_code_offset));
+    // Error codes 4304 - 4308
+    // 4304 - OTA_AUTH_ERROR
+    // 4305 - OTA_BEGIN_ERROR
+    // 4306 - OTA_CONNECT_ERROR
+    // 4307 - OTA_RECEIVE_ERROR
+    // 4308 - OTA_END_ERROR
+
+
+
+    // if (error == OTA_AUTH_ERROR) {
+    //     Serial.println("Auth Failed");
+    // } else if (error == OTA_BEGIN_ERROR) {
+    //     Serial.println("Begin Failed");
+    // } else if (error == OTA_CONNECT_ERROR) {
+    //     Serial.println("Connect Failed");
+    // } else if (error == OTA_RECEIVE_ERROR) {
+    //     Serial.println("Receive Failed");
+    // } else if (error == OTA_END_ERROR) {
+    //     Serial.println("End Failed");
+    // }
 }
+
+void ota_auth_error(char* msg) {
+    Serial.println(msg);
+    Serial.println("Auth Failed");
+}
+
+void ota_begin_error(char* msg) {
+    Serial.println(msg);
+    Serial.println("Begin Failed");
+}
+
+void ota_connect_error(char* msg) {
+    Serial.println(msg);
+    Serial.println("Connect Failed");
+}
+
+void ota_receive_error(char* msg) {
+    Serial.println(msg);
+    Serial.println("Receive Failed");
+}
+
+void ota_end_error(char* msg) {
+    Serial.println(msg);
+    Serial.println("End Failed");
+}
+
 
 void setupOTA() {
     WiFi.mode(WIFI_STA);
