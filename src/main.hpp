@@ -10,6 +10,7 @@
 #include <includes/custom_includes.hpp>
 #include <helpers/helpers.hpp>
  
+using Uid = MFRC522::Uid;
 
 /**
  * @brief Initializes the hardware and software components for the Monopoly project.
@@ -64,7 +65,8 @@ void loopMain();
 
 #ifdef use_ota
 #include <ArduinoOTA.h>
-void handleOTA();
+#include <esp_wifi.h>
+void handleOTA(void*);
 void setupOTA();
 #endif
 

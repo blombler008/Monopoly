@@ -1,6 +1,6 @@
 #include "helpers.hpp"
 
-void helper::format_uid_to_hex_string(char* tag, MFRC522::Uid* uid, size_t tag_size) { 
+void format_uid_to_hex_string(char* tag, Uid* uid, size_t tag_size) { 
     memset(tag, 0, tag_size); // Clear the tag buffer to ensure it is empty before appending data, and prevent buffer overflow
 
     if(uid->size == 0) { // Check if the UID size is zero

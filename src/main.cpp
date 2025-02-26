@@ -111,12 +111,11 @@ void onError(ota_error_t error) {
     }
 }
 
-#include <esp_wifi.h>
 void setupOTA() {
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    esp_wifi_config_80211_tx_rate((wifi_interface_t)ESP_IF_WIFI_STA, WIFI_PHY_RATE_MCS7_LGI); // Set the data rate to 65 Mbps, and long GI
-    esp_wifi_set_bandwidth((wifi_interface_t)ESP_IF_WIFI_STA, WIFI_BW_HT40); // Set the bandwidth to 40 MHz
+    esp_wifi_config_80211_tx_rate(WIFI_IF_STA, WIFI_PHY_RATE_MCS7_LGI); // Set the data rate to 65 Mbps, and long GI
+    esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT40); // Set the bandwidth to 40 MHz
     WiFi.setTxPower(WIFI_POWER_19_5dBm); // Max TX power in dBm (19.5 dBm)
     while (WiFi.waitForConnectResult() != WL_CONNECTED) {
         Serial.println("Connection Failed! Rebooting...");
@@ -136,7 +135,7 @@ void setupOTA() {
     ArduinoOTA.onError(onError);
 }
 
-void handleOTA() {
+void handleOTA(void*) {
     while (true) {
         ArduinoOTA.handle(); 
     } 
@@ -318,11 +317,9 @@ void loopMain() {
          
         delay(20); // Delay to prevent rapid scanning
 
-        // Check if a new card is present
-        if (!mfrc522[i].PICC_IsNewCardPresent()) {
-            continue;
-        }
-
+        // Check if a new card is present 
+        if (!mfrc522[i].PICC_IsNewCardPresent()) continue;
+        
         // Attempt to read the card's serial number
         if (!mfrc522[i].PICC_ReadCardSerial()) {
             log_i("Reader %d(Pin %d): Bad read (was card removed too quickly?)", i, rfidCSPins[i]);  
@@ -335,16 +332,17 @@ void loopMain() {
             continue;
         } 
 
-        MFRC522::Uid uid = {0}; // Create a new UID object
+        Uid uid = {0}; // Create a new UID object
         memcpy(&uid, &(mfrc522[i].uid), mfrc522[i].uid.size); // Copy the UID data
-        char tag[20] = { 0 }; // Create a buffer for the tag data
-        helper::format_uid_to_hex_string(tag, &uid, sizeof(tag)); // Dump the UID data into the buffer
+        char tag[20] = {0}; // Create a buffer for the tag data
+
+        format_uid_to_hex_string(tag, &uid, sizeof(tag)); // Dump the UID data into the buffer
+        
         log_i("Reader %d(Pin %d): Good scan: %s", i, rfidCSPins[i], tag); // Log the UID data
 
         // Call the RFID callback if set
-        if (rfid_callback) {
-            rfid_callback(tag);
-        }
+        if (rfid_callback) rfid_callback(tag);
+        
 
         // Disengage the card
         mfrc522[i].PICC_HaltA();  
