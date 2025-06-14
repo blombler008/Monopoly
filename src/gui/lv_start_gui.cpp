@@ -54,7 +54,7 @@ void displayloop(void*) {
 void lv_start_loop(void) {
     lv_obj_set_style_bg_color(lv_screen_active(), LVBG_COLOR, LV_PART_MAIN);
     lv_obj_set_style_text_color(lv_screen_active(), LVFG_COLOR, LV_PART_MAIN);
-    xTaskCreatePinnedToCore(displayloop, "display", 20000, NULL, 2, NULL, 0); // Increase stack size to 20000
+    xTaskCreatePinnedToCore(displayloop, "display", 20000, NULL, 2, NULL, 1); // Increase stack size to 20000
 }
 
 // GUI Creation

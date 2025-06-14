@@ -87,27 +87,37 @@ void lvgl_print_version() {
 void lv_setup_display(void) {
     lvgl_print_version(); // Log the version of LVGL for compatibility
     uint16_t calData[5] = TFT_CALLIBRATION_DATA;
+    delay(1000); // vor lv_init
     lv_init(); // Initialize the LVGL library
+    log_i("LVGL initialized"); // Log the initialization of LVGL
       
     lv_tick_set_cb(tick_wrapper); // Set the tick callback function for LVGL
     displayInstance = lv_tft_espi_create(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT, draw_buf, sizeof(draw_buf)); // Create a display using the TFT_eSPI library
     displayDriver = (lv_tft_espi_t*)lv_display_get_driver_data(displayInstance); // Get the display driver data
-  
+    if (displayDriver == NULL) {
+        log_e("Failed to get display driver data");
+        throw std::runtime_error("Failed to get display driver data");
+    }
+    
+    log_i("TFT setup"); // Log the completion of the display setup
     lv_display_set_rotation(displayInstance, LV_DISPLAY_ROTATION_270); // Set the display rotation
     displayDriver->tft->setTouch(calData); // Calibrate the touch screen using the predefined calibration data
-
+    log_i("Touch screen calibrated"); // Log the calibration of the touch screen
 
     touchInputDevice = lv_indev_create(); // Create a new input device
     lv_indev_set_type(touchInputDevice, LV_INDEV_TYPE_POINTER); // Set the input device type to pointer (touchpad)
     lv_indev_set_read_cb(touchInputDevice, touch_read_cb); // Set the read callback function for the input device
+    log_i("Touch input device created"); // Log the creation of the touch input device
 
     keypadInputDevice = lv_indev_create(); // Create a new input device
     lv_indev_set_type(keypadInputDevice, LV_INDEV_TYPE_KEYPAD); // Set the input device type to keypad 
     lv_indev_set_read_cb(keypadInputDevice, keypad_read_cb); // Set the read callback function for the input device
-    
+    log_i("Keypad input device created"); // Log the creation of the keypad input device
+
     keypadGroup = lv_group_create(); // Create a new group for the keypad
     lv_indev_set_group(keypadInputDevice, keypadGroup); // Create a new group for the keypad input device
     lv_group_set_default(keypadGroup); // Set the default group for the keypad input device
+    log_i("Keypad group created"); // Log the creation of the keypad group
 }
 
 lv_group_t* getKeypadGroup() {

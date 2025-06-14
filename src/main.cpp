@@ -43,6 +43,7 @@
  */
 #include "main.hpp"
 
+bool stopLoop = false;
 #ifdef use_ota
 
 #define class_error_code_offset 4304
@@ -72,7 +73,6 @@ void onProgress(unsigned int progress, unsigned int total) {
     otaTotal = total;
 }
 
-bool stopLoop = false;
 void onStart() {
     String type;
     if (ArduinoOTA.getCommand() == U_FLASH) {
@@ -97,36 +97,8 @@ void onEnd() {
     Serial.println("\nEnd");
 }
 
-typedef cb_t void (*cb_t)(char);
-
-void onError(ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
-
-    cb_t ota_err[] = {ota_auth_error, ota_begin_error, ota_connect_error, ota_receive_error, ota_end_error};
-
-    ota_err[error](f("Error Code: 0x%8d", error + class_error_code_offset));
-    // Error codes 4304 - 4308
-    // 4304 - OTA_AUTH_ERROR
-    // 4305 - OTA_BEGIN_ERROR
-    // 4306 - OTA_CONNECT_ERROR
-    // 4307 - OTA_RECEIVE_ERROR
-    // 4308 - OTA_END_ERROR
-
-
-
-    // if (error == OTA_AUTH_ERROR) {
-    //     Serial.println("Auth Failed");
-    // } else if (error == OTA_BEGIN_ERROR) {
-    //     Serial.println("Begin Failed");
-    // } else if (error == OTA_CONNECT_ERROR) {
-    //     Serial.println("Connect Failed");
-    // } else if (error == OTA_RECEIVE_ERROR) {
-    //     Serial.println("Receive Failed");
-    // } else if (error == OTA_END_ERROR) {
-    //     Serial.println("End Failed");
-    // }
-}
-
+typedef void (*cb_t)(char*);
+            
 void ota_auth_error(char* msg) {
     Serial.println(msg);
     Serial.println("Auth Failed");
@@ -153,7 +125,39 @@ void ota_end_error(char* msg) {
 }
 
 
+void onError(ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+
+    cb_t ota_err[] = {ota_auth_error, ota_begin_error, ota_connect_error, ota_receive_error, ota_end_error};
+
+    char errMsg[64];
+    sprintf(errMsg, "Error Code: 0x%08X", error + class_error_code_offset);
+    ota_err[error](errMsg);
+    // Error codes 4304 - 4308
+    // 4304 - OTA_AUTH_ERROR
+    // 4305 - OTA_BEGIN_ERROR
+    // 4306 - OTA_CONNECT_ERROR
+    // 4307 - OTA_RECEIVE_ERROR
+    // 4308 - OTA_END_ERROR
+
+
+
+    // if (error == OTA_AUTH_ERROR) {
+    //     Serial.println("Auth Failed");
+    // } else if (error == OTA_BEGIN_ERROR) {
+    //     Serial.println("Begin Failed");
+    // } else if (error == OTA_CONNECT_ERROR) {
+    //     Serial.println("Connect Failed");
+    // } else if (error == OTA_RECEIVE_ERROR) {
+    //     Serial.println("Receive Failed");
+    // } else if (error == OTA_END_ERROR) {
+    //     Serial.println("End Failed");
+    // }
+}
+
 void setupOTA() {
+    WiFi.disconnect(true);  // Trennt AP, vergisst alte Konfig (inkl. Static IP)
+    delay(100);
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     esp_wifi_config_80211_tx_rate(WIFI_IF_STA, WIFI_PHY_RATE_MCS7_LGI); // Set the data rate to 65 Mbps, and long GI
@@ -163,7 +167,7 @@ void setupOTA() {
         Serial.println("Connection Failed! Rebooting...");
         delay(500);
         ESP.restart();
-    }
+    }   
 
 
     ArduinoOTA.setHostname("esp32-monopoly");
@@ -310,14 +314,10 @@ void clear_rfid_callback() {
 }
 
 void setupMain() {  
-    Serial.begin(MONITOR_SPEED); // Initialize serial communication for debugging
-    log_i("Starting"); // Log the start of the setup process
- 
     vls->begin(VSPI_SCK, VSPI_MISO, VSPI_MOSI); // Initialize the VSPI bus
     cls->begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI); // Initialize the HSPI bus
 
     lv_setup_display(); // Initialize the display using LittlevGL
-    log_i("TFT setup"); // Log the completion of the display setup
     
     keypad_set_row_col_num(KEYPAD_ROWS, KEYPAD_COLS); // Set the number of rows and columns for the keypad
     keypad_set_pins((byte*)keypadColPins, (byte*)keypadRowPins); // Set the keypad pins
@@ -338,14 +338,13 @@ void setupMain() {
     
     log_i("SPIFFS setup"); // Log the completion of the SPIFFS setup
  
-    for(int i=0; i<NR_OF_READERS; i++) {
-         
+    for(int i=0; i<NR_OF_READERS; i++) { 
         mfrc522[i].PCD_Init();  // Init each MFRC522 reader
-        delay(4); // Wait for the reader to initialize
+        delay(4); // Wait for the reader to initialize  
         log_i("Reader %d(Pin %d): ", i, rfidCSPins[i]); // Log the reader number and pin
         mfrc522[i].PCD_DumpVersionToSerial(); // Dump the reader version to the serial monitor
         delay(4); // Wait for the reader to finish reading the version register 
-    }
+    } 
     
     lv_create_start_gui(); // Create the initial graphical user interface
     lv_start_loop(); // Start the LittlevGL loop
@@ -393,12 +392,16 @@ void loopMain() {
 }
 #if tests == 0
 void setup() { 
+ 
+    Serial.begin(MONITOR_SPEED); // Initialize serial communication for debugging
+    log_i("Starting"); // Log the start of the setup process
+ 
+    setupMain();
     #ifdef use_ota
         setupOTA();
         xTaskCreate(handleOTA, "OTAHandleTask", 8192, nullptr, 5, nullptr);
     #endif
 
-    setupMain();
 }
 void loop() {
     if(stopLoop) {
