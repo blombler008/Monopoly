@@ -43,152 +43,9 @@
  */
 #include "main.hpp"
 
-bool stopLoop = false;
-#ifdef use_ota
-
-#define class_error_code_offset 4304
-unsigned int otaProgress = 0;
-unsigned int lastProgress = 0;
-unsigned int otaTotal = 0;
-
-void printProgress(void *parameter) {
-    while (true) {
-        if (otaTotal > 0 && otaProgress != lastProgress) { 
-            Serial.printf("\rProgress: %3u%%\033[K", (otaProgress * 100) / otaTotal);
-            lastProgress = otaProgress;
-
-            if (otaProgress == otaTotal) {
-                Serial.println("\nUpdate complete!");
-                vTaskDelete(NULL);
-                return;
-            }
-
-        }
-        delay(2000); // Print progress every 1 second
-    }
-}
-
-void onProgress(unsigned int progress, unsigned int total) {
-    otaProgress = progress;
-    otaTotal = total;
-}
-
-void onStart() {
-    String type;
-    if (ArduinoOTA.getCommand() == U_FLASH) {
-        type = "sketch";
-    } else { // U_SPIFFS
-        type = "filesystem";
-    }
-    // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-    SPIFFS.end();
-    SD.end();
-    audio_stop_loop();
-    keypad_stop();
-    lv_stop_loop();
-    stopLoop = true;
-
-    // Create a new task to print progress
-    xTaskCreate(printProgress, "PrintProgress", 2048, NULL, 1, NULL);
-    Serial.println("Start updating " + type);
-}
-
-void onEnd() {
-    Serial.println("\nEnd");
-}
-
-typedef void (*cb_t)(char*);
-            
-void ota_auth_error(char* msg) {
-    Serial.println(msg);
-    Serial.println("Auth Failed");
-}
-
-void ota_begin_error(char* msg) {
-    Serial.println(msg);
-    Serial.println("Begin Failed");
-}
-
-void ota_connect_error(char* msg) {
-    Serial.println(msg);
-    Serial.println("Connect Failed");
-}
-
-void ota_receive_error(char* msg) {
-    Serial.println(msg);
-    Serial.println("Receive Failed");
-}
-
-void ota_end_error(char* msg) {
-    Serial.println(msg);
-    Serial.println("End Failed");
-}
-
-
-void onError(ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
-
-    cb_t ota_err[] = {ota_auth_error, ota_begin_error, ota_connect_error, ota_receive_error, ota_end_error};
-
-    char errMsg[64];
-    sprintf(errMsg, "Error Code: 0x%08X", error + class_error_code_offset);
-    ota_err[error](errMsg);
-    // Error codes 4304 - 4308
-    // 4304 - OTA_AUTH_ERROR
-    // 4305 - OTA_BEGIN_ERROR
-    // 4306 - OTA_CONNECT_ERROR
-    // 4307 - OTA_RECEIVE_ERROR
-    // 4308 - OTA_END_ERROR
-
-
-
-    // if (error == OTA_AUTH_ERROR) {
-    //     Serial.println("Auth Failed");
-    // } else if (error == OTA_BEGIN_ERROR) {
-    //     Serial.println("Begin Failed");
-    // } else if (error == OTA_CONNECT_ERROR) {
-    //     Serial.println("Connect Failed");
-    // } else if (error == OTA_RECEIVE_ERROR) {
-    //     Serial.println("Receive Failed");
-    // } else if (error == OTA_END_ERROR) {
-    //     Serial.println("End Failed");
-    // }
-}
-
-void setupOTA() {
-    WiFi.disconnect(true);  // Trennt AP, vergisst alte Konfig (inkl. Static IP)
-    delay(100);
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    esp_wifi_config_80211_tx_rate(WIFI_IF_STA, WIFI_PHY_RATE_MCS7_LGI); // Set the data rate to 65 Mbps, and long GI
-    esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT40); // Set the bandwidth to 40 MHz
-    WiFi.setTxPower(WIFI_POWER_19_5dBm); // Max TX power in dBm (19.5 dBm)
-    while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-        Serial.println("Connection Failed! Rebooting...");
-        delay(500);
-        ESP.restart();
-    }   
-
-
-    ArduinoOTA.setHostname("esp32-monopoly");
-    ArduinoOTA.setPassword(WIFI_PASSWORD "-admin");
-    ArduinoOTA.setMdnsEnabled(true);
-    ArduinoOTA.begin();
-
-    ArduinoOTA.onStart(onStart);
-    ArduinoOTA.onEnd(onEnd);
-    ArduinoOTA.onProgress(onProgress);
-    ArduinoOTA.onError(onError);
-}
-
-void handleOTA(void*) {
-    while (true) {
-        ArduinoOTA.handle(); 
-    } 
-}
+bool stopLoop = false;  
  
-#endif 
-
+#if enable_keypad
 /**
  * @brief Array of pin numbers corresponding to the rows of the keypad.
  * 
@@ -218,7 +75,7 @@ const byte keypadColPins[KEYPAD_COLS] = KEYPAD_COL_PINS;
  * @var KEYPAD_COLS The number of columns in the keypad.
  */
 const char keypadLayout[KEYPAD_ROWS][KEYPAD_COLS] = KEYPAD_LAYOUT;
-
+#endif
 /**
  * @brief Creates a new instance of the SPIClass using the HSPI hardware SPI bus.
  * 
@@ -239,6 +96,9 @@ SPIClass* cls = new SPIClass(HSPI);
  *       before initializing it to avoid conflicts.
  */
 SPIClass* vls = new SPIClass(VSPI); 
+
+#define FSPI_SPICLASS 2
+SPIClass* fls_spi = new SPIClass(FSPI_SPICLASS);
 
 /**
  * @brief Initializes SPI settings with specified clock divider, bit order, and data mode.
@@ -316,16 +176,16 @@ void clear_rfid_callback() {
 void setupMain() {  
     vls->begin(VSPI_SCK, VSPI_MISO, VSPI_MOSI); // Initialize the VSPI bus
     cls->begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI); // Initialize the HSPI bus
-
+    fls_spi->begin(FSPI_SCK, FSPI_MISO, FSPI_MOSI); // Initialize the FSPI bus
     lv_setup_display(); // Initialize the display using LittlevGL
-    
+#if enable_keypad
     keypad_set_row_col_num(KEYPAD_ROWS, KEYPAD_COLS); // Set the number of rows and columns for the keypad
     keypad_set_pins((byte*)keypadColPins, (byte*)keypadRowPins); // Set the keypad pins
     keypad_set_layout((char*)keypadLayout); // Set the keypad layout
     keypad_setup(); // Set up the keypad event handler
-    
+#endif
     pinMode(SD_CS, OUTPUT); // Set the SD card chip select pin as an output
-    if(SD.begin(SD_CS, *cls, num_to_mhz(4))) { // Initialize the SD card on the HSPI bus [4 MHz]
+    if(SD.begin(SD_CS, *fls_spi, num_to_mhz(4))) { // Initialize the SD card on the HSPI bus [4 MHz]
         audio_setup(); // Set up the audio system
         audio_start_loop();  // Start the audio loop for service 
     } 
@@ -396,12 +256,7 @@ void setup() {
     Serial.begin(MONITOR_SPEED); // Initialize serial communication for debugging
     log_i("Starting"); // Log the start of the setup process
  
-    setupMain();
-    #ifdef use_ota
-        setupOTA();
-        xTaskCreate(handleOTA, "OTAHandleTask", 8192, nullptr, 5, nullptr);
-    #endif
-
+    setupMain(); 
 }
 void loop() {
     if(stopLoop) {

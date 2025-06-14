@@ -59,15 +59,4 @@ void setupMain();
  */
 void loopMain();
 
-#if ota == 1 && defined(WIFI_SSID) && defined(WIFI_PASSWORD)
-#define use_ota 1
-#endif
-
-#ifdef use_ota
-#include <ArduinoOTA.h>
-#include <esp_wifi.h>
-void handleOTA(void*);
-void setupOTA();
-#endif
-
 #endif

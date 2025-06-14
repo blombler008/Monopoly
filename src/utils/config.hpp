@@ -13,14 +13,21 @@
 
 // SPI SETTINGS
 #define VSPI_SPEED num_to_mhz(10)
-// SPI PINS
+
+// Touch + Display SPI PINS
 #define HSPI_MISO    12 //11
 #define HSPI_MOSI    13 //12
 #define HSPI_SCK     14 // 9
 
+// RFID SPI BUS
 #define VSPI_MISO  48 //21  
 #define VSPI_MOSI  47 //20  
 #define VSPI_SCK   21 //19  
+
+// SD CARD SPI BUS
+#define FSPI_MISO  15
+#define FSPI_MOSI  16
+#define FSPI_SCK   17
 
 // TFT SETTINGS
 #define TFT_ROTATION TFT_LANDSCAPE_1
@@ -44,7 +51,7 @@
 #define RFID_CS_PINS { RFID_CS1, RFID_CS2 }
 
 // SD Settings
-#define SD_CS       2
+#define SD_CS       4
 
 // Audio Settings
 #define I2S_MUTE    42
@@ -52,6 +59,7 @@
 #define I2S_BCLK    39
 #define I2S_LRC     41
 
+#define enable_keypad 0
 // KEYPAD SETTINGS
 #define KEYPAD_ROWS 4
 #define KEYPAD_COLS 4
@@ -61,7 +69,7 @@
     {'3','6','9',LV_KEY_ENTER}, \
     {'A','B','C','D'}  \
 }
-#define KEYPAD_ROW_PINS {4, 5, 6, 7}
-#define KEYPAD_COL_PINS {15, 16, 17, 18}
+#define KEYPAD_ROW_PINS //{4, 5, 6, 7}
+#define KEYPAD_COL_PINS //{15, 16, 17, 18}
 
 #endif
