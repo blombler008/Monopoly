@@ -45,37 +45,12 @@
 
 bool stopLoop = false;  
  
-#if USE_KEYPAD
-/**
- * @brief Array of pin numbers corresponding to the rows of the keypad.
- * 
- * This array is used to define which pins on the microcontroller are connected
- * to the rows of the keypad. The size of the array is determined by the 
- * KEYPAD_ROWS constant, and the pin numbers are defined by the KEYPAD_ROW_PINS 
- * macro.
- */
-const byte keypadRowPins[KEYPAD_ROWS] = KEYPAD_ROW_PINS;
-/**
- * @brief Array of pin numbers for the columns of the keypad.
- * 
- * This array holds the pin numbers that are connected to the columns of the keypad.
- * The size of the array is determined by the KEYPAD_COLS constant.
- * The pin numbers are defined by the KEYPAD_COL_PINS macro.
- */
-const byte keypadColPins[KEYPAD_COLS] = KEYPAD_COL_PINS;  
+#if USE_KEYPAD   
+   
+const char* keymap = KEYPAD_LAYOUT; // Define the keypad layout using the KEYPAD_LAYOUT macro
 
-/**
- * @brief Layout of the keypad.
- * 
- * This 2D array represents the layout of a 4x4 keypad. Each element corresponds
- * to a key on the keypad.
- * 
- * @var KEYPAD_LAYOUT The 2D array representing the keypad layout.
- * @var KEYPAD_ROWS The number of rows in the keypad.
- * @var KEYPAD_COLS The number of columns in the keypad.
- */
-const char keypadLayout[KEYPAD_ROWS][KEYPAD_COLS] = KEYPAD_LAYOUT;
-#endif
+#endif // USE_KEYPAD
+
 /**
  * @brief Creates a new instance of the SPIClass using the HSPI hardware SPI bus.
  * 
@@ -167,10 +142,18 @@ void setupMain() {
 #endif
 
 #if USE_KEYPAD
-    keypad_set_row_col_num(KEYPAD_ROWS, KEYPAD_COLS); // Set the number of rows and columns for the keypad
-    keypad_set_pins((byte*)keypadColPins, (byte*)keypadRowPins); // Set the keypad pins
-    keypad_set_layout((char*)keypadLayout); // Set the keypad layout
-    keypad_setup(); // Set up the keypad event handler
+    keypad_set_address(KEYPAD_I2C); // Set the I2C address for the keypad
+    keypad_set_layout(keymap); // Set the layout for the keypad
+    keypad_setup(); // Initialize the keypad with the specified layout and address
+    log_i("Keypad initialized with address: 0x%02X", KEYPAD_I2C); // Log the I2C address of the keypad
+
+    // Wire.begin(I2C_SDA, I2C_SCL); // Initialize the I2C bus with specified SDA and SCL pins
+    // Wire.setClock(num_to_khz(400));    // 400 kHz I2C clock speed
+    // if (keyPad.begin() == false) {
+    //     Serial.println("\nERROR: cannot communicate to keypad.\nPlease reboot.\n");
+    //     while (1);
+    // }
+    // keyPad.loadKeyMap(keymap);
 #endif
 #if USE_SD
     digitalWrite(SD_STATUS_LED, HIGH); // Turn on the SD status LED to indicate SD card operations 
@@ -190,7 +173,7 @@ void setupMain() {
     log_i("Starting loop"); 
 } 
  
-#if tests == 0
+ 
 void setup() { 
  
     Serial.begin(MONITOR_SPEED); // Initialize serial communication for debugging
@@ -198,7 +181,7 @@ void setup() {
  
     setupMain(); 
 }
-
+#if tests == 0
 unsigned long last_display_time = 0;
 unsigned long last_rfid_time = 0;
 bool ledChanged = false; // Flag to track if the LED state has changed

@@ -5,8 +5,9 @@
 #include <lv_conf.h> 
 
 #include <Arduino.h>  
-#include <I2CKeyPad.h>
+#include <Wire.h>
 #include <SPI.h>
+#include <I2CKeyPad.h>
 #include <lvgl.h>
 #include <TFT_eSPI.h>
 #include <Audio.h>

@@ -24,6 +24,10 @@
 #define FSPI_MOSI  16
 #define FSPI_SCK   17
 
+// I2C SETTINGS
+#define I2C_SDA 6 // SDA pin for I2C communication
+#define I2C_SCL 7 // SCL pin for I2C communication
+
 // TFT SETTINGS
 #define TFT_ROTATION TFT_LANDSCAPE_1
 #define TFT_SCREEN_WIDTH 240
@@ -54,7 +58,7 @@
 #define I2S_LRC     41
 
 // PHERIPHERALS SETTINGS
-#define USE_KEYPAD 0
+#define USE_KEYPAD 1
 #define USE_DISPLAY 1
 #define USE_RFID 1
 #define USE_SD 1
@@ -67,15 +71,13 @@
 // KEYPAD SETTINGS
 
 #define KEYPAD_I2C 0x20 // default i2c address of the pfc8574 i2c expander (0x20, assuming all pins are connected to GND)
-#define KEYPAD_ROWS 4
-#define KEYPAD_COLS 4
-#define KEYPAD_LAYOUT { \
-    {'1','4','7',LV_KEY_BACKSPACE}, \
-    {'2','5','8','0'}, \
-    {'3','6','9',LV_KEY_ENTER}, \
-    {'A','B','C','D'}  \
-}
-#define KEYPAD_ROW_PINS //{4, 5, 6, 7}
-#define KEYPAD_COL_PINS //{15, 16, 17, 18}
+ 
+#define KEYPAD_LAYOUT "123A456B789C" "\x08" "0" "\x0D" "DNF"
+// Replace \x08 and \x0D with the actual values of LV_KEY_BACKSPACE and LV_KEY_ENTER if they are defined as macros or constants elsewhere.
+// Alternatively, if LV_KEY_BACKSPACE and LV_KEY_ENTER are macros, use stringification or define as a char array, e.g.:
+ // static const char KEYPAD_LAYOUT[] = "123A456B789C" {LV_KEY_BACKSPACE, '0', LV_KEY_ENTER, 'D', 'N', 'F', '\0'};
+ 
+
+
 
 #endif

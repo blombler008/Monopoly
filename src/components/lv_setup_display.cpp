@@ -38,28 +38,28 @@ void flush_display_buffer(lv_display_t *disp, const lv_area_t *area, uint8_t * p
 }
 
 void keypad_read_cb(lv_indev_t * indev, lv_indev_data_t* data) {
-    // static uint8_t last_key = 0; // Variable to store the last key pressed
-    // Keypad keypad = getKeypad(); // Get the keypad object
-    // uint8_t key = keypad.getKey(); // Get the key pressed on the keypad
-    // KeyState keyState = keypad.getState(); // Get the state of the key
+    static uint8_t last_key = 0; // Variable to store the last key pressed
+    I2CKeyPad keypad = getKeypad(); // Get the keypad object
 
-    // if(keyState == IDLE) { // Check if the key is idle
+    if(!keypad.isPressed()) return; // Return if no key is pressed
+
+    uint8_t key = keypad.getChar(); // Get the key pressed on the keypad 
+
+    // if the same key is pressed as the last key, we want to ignore the press if it is withing a 2 sec window. 
+    //otherwise when the key is released, it will be considered a new key press
+    // if (key == last_key && millis() - keypad.getLastTimeRead() < 2000) {
     //     data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
-    //     data->key = last_key; // Set the key to the last key pressed
-    //     return; // Exit the function
+    //     return; // Ignore the key press
     // }
 
+    data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
+    data->key = key; // Set the key to the key pressed
+ 
+    if (key) {
+        data->state = LV_INDEV_STATE_PRESSED; // Check if the key is pressed
+    }
 
-    // data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
-    // data->key = key; // Set the key to the key pressed
-
-    // log_i("Key: %c, State: %d", key, keyState); // Log the key and state to the serial output
-
-    // if (key) {
-    //     data->state = LV_INDEV_STATE_PRESSED; // Check if the key is pressed
-    // }
-
-    // last_key = key; // Set the last key to the current key
+    last_key = key; // Set the last key to the current key
 }
 
 void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data) { 
@@ -115,15 +115,15 @@ void lv_setup_display(void) {
     lv_indev_set_read_cb(touchInputDevice, touch_read_cb); // Set the read callback function for the input device
     log_i("Touch input device created"); // Log the creation of the touch input device
 
-    // keypadInputDevice = lv_indev_create(); // Create a new input device
-    // lv_indev_set_type(keypadInputDevice, LV_INDEV_TYPE_KEYPAD); // Set the input device type to keypad 
-    // lv_indev_set_read_cb(keypadInputDevice, keypad_read_cb); // Set the read callback function for the input device
-    // log_i("Keypad input device created"); // Log the creation of the keypad input device
+    keypadInputDevice = lv_indev_create(); // Create a new input device
+    lv_indev_set_type(keypadInputDevice, LV_INDEV_TYPE_KEYPAD); // Set the input device type to keypad 
+    lv_indev_set_read_cb(keypadInputDevice, keypad_read_cb); // Set the read callback function for the input device
+    log_i("Keypad input device created"); // Log the creation of the keypad input device
 
-    // keypadGroup = lv_group_create(); // Create a new group for the keypad
-    // lv_indev_set_group(keypadInputDevice, keypadGroup); // Create a new group for the keypad input device
-    // lv_group_set_default(keypadGroup); // Set the default group for the keypad input device
-    // log_i("Keypad group created"); // Log the creation of the keypad group
+    keypadGroup = lv_group_create(); // Create a new group for the keypad
+    lv_indev_set_group(keypadInputDevice, keypadGroup); // Create a new group for the keypad input device
+    lv_group_set_default(keypadGroup); // Set the default group for the keypad input device
+    log_i("Keypad group created"); // Log the creation of the keypad group
 }
 
 lv_group_t* getKeypadGroup() {
