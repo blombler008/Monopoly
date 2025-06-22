@@ -1,5 +1,8 @@
 #include "helpers.hpp"
 
+
+SemaphoreHandle_t spi_semaphore = xSemaphoreCreateMutex();
+
 void format_uid_to_hex_string(char* tag, Uid* uid, size_t tag_size) { 
     memset(tag, 0, tag_size); // Clear the tag buffer to ensure it is empty before appending data, and prevent buffer overflow
 
@@ -29,4 +32,24 @@ void format_uid_to_hex_string(char* tag, Uid* uid, size_t tag_size) {
         strncat(tag, buff, tag_size - strlen(tag) - 1); // Append the byte to the tag buffer
     };
      
+}
+
+
+bool SPI_guarded(const char* label, uint32_t timeout_ms, std::function<void()> fn) {
+    if (!spi_semaphore) {
+        log_e("[%s] SPI mutex not initialized!", label);
+        return false;
+    }
+
+    if (xSemaphoreTake(spi_semaphore, 0)) {
+        // log_d("[%s] SPI mutex acquired", label);
+        fn(); // Funktion ausführen
+        xSemaphoreGive(spi_semaphore);
+        // log_d("[%s] SPI mutex released", label);
+        return true;
+    } else {
+        log_w("[%s] SPI mutex TIMEOUT (%d ms)", label, timeout_ms);
+        vTaskDelay(pdMS_TO_TICKS(timeout_ms)); // Wait for the semaphore to be available
+        return false;
+    }
 }

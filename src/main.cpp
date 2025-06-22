@@ -45,7 +45,7 @@
 
 bool stopLoop = false;  
  
-#if enable_keypad
+#if USE_KEYPAD
 /**
  * @brief Array of pin numbers corresponding to the rows of the keypad.
  * 
@@ -79,12 +79,12 @@ const char keypadLayout[KEYPAD_ROWS][KEYPAD_COLS] = KEYPAD_LAYOUT;
 /**
  * @brief Creates a new instance of the SPIClass using the HSPI hardware SPI bus.
  * 
- * This line of code initializes a new SPIClass object and assigns it to the pointer `cls`.
+ * This line of code initializes a new SPIClass object and assigns it to the pointer `h_spi`.
  * The HSPI parameter specifies that the HSPI hardware SPI bus should be used.
  * 
  * @note Ensure that the HSPI bus is available and not being used by another peripheral.
  */
-SPIClass* cls = new SPIClass(HSPI); 
+SPIClass* h_spi = new SPIClass(HSPI); 
 /**
  * @brief Creates a new instance of the SPIClass using the VSPI hardware SPI bus.
  * 
@@ -95,161 +95,101 @@ SPIClass* cls = new SPIClass(HSPI);
  * @note Ensure that the VSPI bus is not being used by other peripherals 
  *       before initializing it to avoid conflicts.
  */
-SPIClass* vls = new SPIClass(VSPI); 
+SPIClass* v_spi = new SPIClass(VSPI); 
 
-#define FSPI_SPICLASS 2
-SPIClass* fls_spi = new SPIClass(FSPI_SPICLASS);
-
-/**
- * @brief Initializes SPI settings with specified clock divider, bit order, and data mode.
- *
- * This instance of SPISettings configures the SPI communication with the following parameters:
- * - Clock Divider: SPI_CLOCK_DIV4 (sets the SPI clock to 1/4th of the system clock)
- * - Bit Order: MSBFIRST (Most Significant Bit First)
- * - Data Mode: SPI_MODE0 (Clock polarity 0, Clock phase 0)
- *
- * Clock Divider Options:
- * - SPI_CLOCK_DIV2: SPI clock is 1/2 of the system clock
- * - SPI_CLOCK_DIV4: SPI clock is 1/4 of the system clock
- * - SPI_CLOCK_DIV8: SPI clock is 1/8 of the system clock
- * - SPI_CLOCK_DIV16: SPI clock is 1/16 of the system clock
- * - SPI_CLOCK_DIV32: SPI clock is 1/32 of the system clock
- * - SPI_CLOCK_DIV64: SPI clock is 1/64 of the system clock
- * - SPI_CLOCK_DIV128: SPI clock is 1/128 of the system clock
- *
- * Bit Order Options:
- * - SPI_MSBFIRST: Most Significant Bit First
- * - SPI_LSBFIRST: Least Significant Bit First
- *
- * Data Mode Options:
- * - SPI_MODE0: Clock polarity 0, Clock phase 0
- * - SPI_MODE1: Clock polarity 0, Clock phase 1
- * - SPI_MODE2: Clock polarity 1, Clock phase 0
- * - SPI_MODE3: Clock polarity 1, Clock phase 1
- */
-SPISettings spiSettings = SPISettings(SPI_CLOCK_DIV4, SPI_MSBFIRST, SPI_MODE0);
-
-/**
- * @brief Initializes an MFRC522 SPI device.
- * 
- * This object represents an MFRC522 RFID reader connected via SPI interface.
- * 
- * @param RFID_CS1 Chip select pin for the RFID reader.
- * @param UNUSED_PIN Unused pin, typically set to a default or placeholder value.
- * @param vls Voltage level shifter or power control parameter.
- * @param spiSettings SPI settings configuration for the device.
- */
-MFRC522_SPI spiDevice1 = MFRC522_SPI(RFID_CS1, UNUSED_PIN, vls, spiSettings); 
-
-/**
- * @brief Initializes an MFRC522 SPI device with specified settings.
- * 
- * This object represents an MFRC522 RFID reader connected via SPI interface.
- * 
- * @param RFID_CS2 The chip select pin for the second RFID reader.
- * @param UNUSED_PIN A placeholder for an unused pin.
- * @param vls The voltage level shifter object or configuration.
- * @param spiSettings The SPI settings to be used for communication.
- */
-MFRC522_SPI spiDevice2 = MFRC522_SPI(RFID_CS2, UNUSED_PIN, vls, spiSettings);  
-  
-/**
- * @brief Array of chip select (CS) pins for RFID modules.
- * 
- * This array holds the pin numbers used to select the RFID modules
- * connected to the microcontroller. The pins are defined by the 
- * RFID_CS_PINS macro.
- */
-byte rfidCSPins[] = RFID_CS_PINS;
-MFRC522 mfrc522[NR_OF_READERS] = { MFRC522(&spiDevice1) ,MFRC522(&spiDevice2)}; 
-  
-RFIDCallback rfid_callback = nullptr;
-
-void set_rfid_callback(RFIDCallback callback) {
-    rfid_callback = callback;
+void make_bargraph(int numChars, float usedPercentage, char* label) {
+    int num_hashes = static_cast<int>(usedPercentage / 2); 
+    num_hashes = std::min(num_hashes, numChars);  
+    std::string bar(num_hashes, '#'); 
+    bar.append(numChars - num_hashes, ' ');  
+    strcpy(label, bar.c_str()); 
 }
 
-void clear_rfid_callback() {
-    rfid_callback = nullptr;
-}
+void show_sd_info() {
+    log_i("SD Card Type: %s", SD.cardType() == CARD_SDHC ? "SDHC" : "SD");
+    log_i("SD Card Size: %llu bytes", SD.cardSize());
+    log_i("SD Card Sectors: %zu", SD.numSectors());
+    log_i("SD Card Sector Size: %zu bytes", SD.sectorSize());
+    log_i("SD Card Total Bytes: %llu", SD.totalBytes());
+    log_i("SD Card Used Bytes: %llu", SD.usedBytes());
+    log_i("SD Card Free Bytes: %llu", SD.totalBytes() - SD.usedBytes());
+    log_i("SD Card Used/Total GB: %.2f/%.2f", SD.usedBytes() / (1024.0 * 1024.0 * 1024.0), SD.totalBytes() / (1024.0 * 1024.0 * 1024.0));
+    // Show used / total GB of the SD card as filling Bargraph from left to right ((SD.usedBytes() / SD.totalBytes()) * 100)
+    // Like a progress bar, like this: [##########          ] 50%
+    // width of the bar should be 40 characters
+    float usedGB = SD.usedBytes() / (1024.0 * 1024.0 * 1024.0); // Convert used bytes to GB
+    float totalGB = SD.totalBytes() / (1024.0 * 1024.0 * 1024.0); // Convert total bytes to GB
+    float usedPercentage = (usedGB / totalGB) * 100.0; // Calculate the percentage of used space 
+    char label[81]; // Create a label for the bar graph, 80 characters + null terminator
+    make_bargraph(80, usedPercentage, (char*)label); // Create a bar graph string with 80 characters width
+    label[80] = '\0'; // Ensure the label is null-terminated
+    log_i("SD Card Used/Total GB: [%s] %.2f%%", label, usedPercentage); // Log the used percentage as a bar graph
 
+    log_i("SD contents:"); // Log the contents of the SDSS file system
+    File root = SD.open("/"); // Open the root directory of SDFS
+    if (root) {
+        File file = root.openNextFile(); // Open the next file in the directory
+        while (file) { // While there are files in the directory
+            log_i("File: %s, Size: %d bytes", file.name(), file.size()); // Log the file name and size
+            file = root.openNextFile(); // Move to the next file
+        }
+        root.close(); // Close the root directory
+    } else {
+        log_i("Failed to open SD root directory"); // Log failure to open root directory
+    }
+}
+   
+bool is_sd_card_initialized = false; // Flag to check if the SD card is initialized
 void setupMain() {  
-    vls->begin(VSPI_SCK, VSPI_MISO, VSPI_MOSI); // Initialize the VSPI bus
-    cls->begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI); // Initialize the HSPI bus
-    fls_spi->begin(FSPI_SCK, FSPI_MISO, FSPI_MOSI); // Initialize the FSPI bus
-    lv_setup_display(); // Initialize the display using LittlevGL
-#if enable_keypad
+    v_spi->begin(FSPI_SCK, FSPI_MISO, FSPI_MOSI); // Initialize the VSPI bus
+    h_spi->begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI); // Initialize the HSPI bus 
+ 
+    pinMode(SD_STATUS_LED, OUTPUT); // Set the SD status LED pin as output 
+    digitalWrite(SD_STATUS_LED, LOW); // Turn off the SD status LED initially
+    pinMode(SD_DETECT_PIN, INPUT_PULLUP); // Set the SD card detect pin as input with pull-up resistor 
+
+    // Alle CS-Pins deaktivieren (HIGH = inaktiv)
+    byte CSPins[] = {TFT_CS, TOUCH_CS, RFID_CS, SD_CS}; // Array of chip select pins for various peripherals
+
+    for (size_t i = 0; i < 4; i++) { 
+        pinMode(CSPins[i], OUTPUT);
+        digitalWrite(CSPins[i], HIGH);
+    }
+ 
+#if USE_DISPLAY
+ 
+    lv_setup_display(); // Initialize the display using LittlevGL  
+    lv_create_start_gui(); // Create the initial graphical user interface
+    lv_start_loop(); // Start the LittlevGL loop
+#endif
+#if USE_RFID
+    rfid_setup(h_spi); // Set up the RFID readers
+#endif
+
+#if USE_KEYPAD
     keypad_set_row_col_num(KEYPAD_ROWS, KEYPAD_COLS); // Set the number of rows and columns for the keypad
     keypad_set_pins((byte*)keypadColPins, (byte*)keypadRowPins); // Set the keypad pins
     keypad_set_layout((char*)keypadLayout); // Set the keypad layout
     keypad_setup(); // Set up the keypad event handler
 #endif
-    pinMode(SD_CS, OUTPUT); // Set the SD card chip select pin as an output
-    if(SD.begin(SD_CS, *fls_spi, num_to_mhz(4))) { // Initialize the SD card on the HSPI bus [4 MHz]
+#if USE_SD
+    digitalWrite(SD_STATUS_LED, HIGH); // Turn on the SD status LED to indicate SD card operations 
+    if(SD.begin(SD_CS, *v_spi, num_to_mhz(4))) { // Initialize the SD card on the HSPI bus [4 MHz]
+        is_sd_card_initialized = true; // Set the flag indicating SD card is initialized
+        log_i("SD Card initialized successfully!"); // Log success message for SD card initialization
+#if USE_AUDIO
         audio_setup(); // Set up the audio system
         audio_start_loop();  // Start the audio loop for service 
-    } 
-
-    if (SPIFFS.begin(true))  { // Initialize the SPIFFS file system
-        log_i("SPIFFS mounted"); // Log the successful mounting of SPIFFS
+#endif 
+        show_sd_info(); // Show information about the SD card
     } else {
-        log_i("SPIFFS failed to mount"); // Log the failure to mount SPIFFS
-    }
-    
-    log_i("SPIFFS setup"); // Log the completion of the SPIFFS setup
- 
-    for(int i=0; i<NR_OF_READERS; i++) { 
-        mfrc522[i].PCD_Init();  // Init each MFRC522 reader
-        delay(4); // Wait for the reader to initialize  
-        log_i("Reader %d(Pin %d): ", i, rfidCSPins[i]); // Log the reader number and pin
-        mfrc522[i].PCD_DumpVersionToSerial(); // Dump the reader version to the serial monitor
-        delay(4); // Wait for the reader to finish reading the version register 
+        log_e("SD Card initialization failed!"); // Log an error if SD card initialization fails
+        digitalWrite(SD_STATUS_LED, LOW); // Turn off the SD status LED to indicate failure
     } 
-    
-    lv_create_start_gui(); // Create the initial graphical user interface
-    lv_start_loop(); // Start the LittlevGL loop
-    log_i("Starting loop");
-    
+#endif  
+    log_i("Starting loop"); 
 } 
-
-
-void loopMain() { 
-    for(int i=0; i<NR_OF_READERS; i++) { // Iterate over the readers
-         
-        delay(20); // Delay to prevent rapid scanning
-
-        // Check if a new card is present 
-        if (!mfrc522[i].PICC_IsNewCardPresent()) continue;
-        
-        // Attempt to read the card's serial number
-        if (!mfrc522[i].PICC_ReadCardSerial()) {
-            log_i("Reader %d(Pin %d): Bad read (was card removed too quickly?)", i, rfidCSPins[i]);  
-            continue;
-        }
-
-        // Check if the UID size is valid
-        if (mfrc522[i].uid.size == 0) {
-            log_i("Reader %d(Pin %d): Bad card (size = 0)", i, rfidCSPins[i]);   
-            continue;
-        } 
-
-        Uid uid = {0}; // Create a new UID object
-        memcpy(&uid, &(mfrc522[i].uid), mfrc522[i].uid.size); // Copy the UID data
-        char tag[20] = {0}; // Create a buffer for the tag data
-
-        format_uid_to_hex_string(tag, &uid, sizeof(tag)); // Dump the UID data into the buffer
-        
-        log_i("Reader %d(Pin %d): Good scan: %s", i, rfidCSPins[i], tag); // Log the UID data
-
-        // Call the RFID callback if set
-        if (rfid_callback) rfid_callback(tag);
-        
-
-        // Disengage the card
-        mfrc522[i].PICC_HaltA();  
-        mfrc522[i].PCD_StopCrypto1();
-    }
-}
+ 
 #if tests == 0
 void setup() { 
  
@@ -258,11 +198,53 @@ void setup() {
  
     setupMain(); 
 }
+
+unsigned long last_display_time = 0;
+unsigned long last_rfid_time = 0;
+bool ledChanged = false; // Flag to track if the LED state has changed
+bool ledState = false; // Current state of the LED (off by default)
 void loop() {
+    
+    vTaskDelay(20); 
+    unsigned long now = millis();
+
+    // make the sd led blink in an interval of 500ms like a heartbeat (off for 450ms, on for 50ms)
+    //only write to the SD status LED when the SD card is initialized and the led does not need to change state
+    // eg. when the SD card is not initialized, the LED should be off
+    // eg. when the state is off, no need to write to the LED off
+    // eg. when the state is on, no need to write to the LED on
+    // this is to save power and avoid unnecessary writes to the LED
+
+    if (is_sd_card_initialized) {
+        if (ledChanged) {
+            digitalWrite(SD_STATUS_LED, ledState ? HIGH : LOW); // Set the SD status LED to the current state
+            ledChanged = false; // Reset the flag after changing the LED state
+        }
+        if (now % 500 < 50) {
+            ledState = true; // Set the LED state to on
+            ledChanged = true; // Set the flag to indicate that the LED state has changed
+        } else {
+            ledState = false; // Set the LED state to off
+            ledChanged = true; // Set the flag to indicate that the LED state has changed 
+        }
+    } 
+ 
+#if USE_RFID
+    // 100ms RFID
+    if (now - last_rfid_time >= 100) {
+        last_rfid_time = now;
+ 
+        rfid_loop(); // Call the RFID loop function to check for new cards 
+    }
+
+#endif
+ 
+#if USE_DISPLAY 
+    lv_task_handler();  // let the GUI do its work
+    lv_timer_handler(); 
+#endif
     if(stopLoop) {
         return;
-    } 
-
-    loopMain();
+    }  
 }
 #endif

@@ -38,25 +38,4 @@ using Uid = MFRC522::Uid;
  */
 void setupMain();
 
-/**
- * @brief Main loop function that continuously checks for new RFID cards on multiple readers.
- * 
- * This function iterates over a predefined number of RFID readers, checking each one for the presence of a new card.
- * If a new card is detected, it attempts to read the card's serial number and logs the result.
- * The card is then disengaged to allow for subsequent reads.
- * 
- * @note The function assumes that the array `mfrc522` and `ssPins` are properly initialized and accessible.
- * 
- * @details
- * - The function iterates over the readers using a for loop.
- * - For each reader, it checks if a new card is present using `PICC_IsNewCardPresent()`.
- * - If a new card is detected, it reads the card's serial number using `PICC_ReadCardSerial()`.
- * - If the read is successful and the card's UID size is valid, it logs the UID.
- * - The card is then disengaged using `PICC_HaltA()` and `PCD_StopCrypto1()`.
- * 
- * @warning Ensure that `NR_OF_READERS` is correctly defined and matches the number of readers connected.
- * @warning The function may need to be modified to handle additional error cases or edge conditions.
- */
-void loopMain();
-
 #endif

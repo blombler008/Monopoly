@@ -31,30 +31,14 @@ static void screen_event_cb(lv_event_t * event) {
         remove_keyboard_and_clear_focus();
     }
 }
-
-bool killLVTask = false;
-void lv_stop_loop(void) {
-    killLVTask = true;
-}
-
-// Main Loop
-void displayloop(void*) { 
-    while (1) {
-        delay(20);
-        lv_task_handler();  // let the GUI do its work
-        lv_timer_handler();
-
-        if(killLVTask) { 
-            vTaskDelete(NULL);
-        }
-        // lv_tick_inc(lv_timer_handler());     // tell LVGL how much time has passed
-    }
-}
-
+  
 void lv_start_loop(void) {
     lv_obj_set_style_bg_color(lv_screen_active(), LVBG_COLOR, LV_PART_MAIN);
-    lv_obj_set_style_text_color(lv_screen_active(), LVFG_COLOR, LV_PART_MAIN);
-    xTaskCreatePinnedToCore(displayloop, "display", 20000, NULL, 2, NULL, 1); // Increase stack size to 20000
+    lv_obj_set_style_text_color(lv_screen_active(), LVFG_COLOR, LV_PART_MAIN);  
+    // TimerHandle_t lvglTickTimer = xTimerCreate("lvglTick", pdMS_TO_TICKS(5), pdTRUE, NULL, [](TimerHandle_t xTimer){
+    //     lv_tick_inc(5);
+    // });
+    // xTimerStart(lvglTickTimer, 0);
 }
 
 // GUI Creation
@@ -96,8 +80,25 @@ void lv_create_start_gui_async(void*) {
     lv_obj_t * btn_label = lv_label_create(btn1);
     lv_label_set_text(btn_label, "Karte hinzufügen");
     lv_obj_center(btn_label);
+
+
+    // Create a Button (btn2) that plays a sound 
+    lv_obj_t * btn2 = lv_button_create(src);
+    lv_obj_add_event_cb(btn2, [](lv_event_t * event) {
+        log_i("Playing sound");
+        audio_playback_start("Haut.mp3");
+    }, LV_EVENT_CLICKED, NULL);    
+    lv_obj_align(btn2, LV_ALIGN_CENTER, 0, 100);
+    lv_obj_remove_flag(btn2, LV_OBJ_FLAG_PRESS_LOCK);
+
+    lv_obj_t * btn2_settings_label = lv_label_create(btn2);
+    lv_label_set_text(btn2_settings_label, "Sound abspielen");
+    lv_obj_center(btn2_settings_label);
+
+
 }
 
 void lv_create_start_gui(void) {
     time_gui_creation_async(lv_create_start_gui_async, NULL);
+    // lv_async_call(lv_create_start_gui_async, NULL);
 }

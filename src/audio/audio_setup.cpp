@@ -7,12 +7,13 @@ bool killATask = false;
 
 void audioloop(void *) {
     while (1) {
+        delayMicroseconds(100); // Allow other tasks to run, adjust as needed
+        // delay(1); // To ensure the task is watchdog-safe 
         audio.loop();
-        delay(1);
-
         if(killATask) {
             vTaskDelete(NULL);
         }
+       
     } 
 }
 

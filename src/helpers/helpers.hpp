@@ -3,6 +3,7 @@
 #define HELPERS_HPP
 #include <MFRC522.h>
 using Uid = MFRC522::Uid;
+extern SemaphoreHandle_t spi_semaphore;
 /**
  * @brief Dumps the UID byte array into a formatted string.
  *
@@ -20,5 +21,14 @@ using Uid = MFRC522::Uid;
  */
 void format_uid_to_hex_string(char* tag, Uid* uid, size_t tag_size);
 
+/**
+ * @brief Führt eine SPI-Operation mutexgeschützt aus.
+ * 
+ * @param label Bezeichner für Logging (z. B. "Touch", "RFID", "Display")
+ * @param timeout_ms Timeout in Millisekunden (z. B. 10)
+ * @param fn Lambda oder Funktion, die ausgeführt wird, wenn der Mutex verfügbar ist.
+ * @return true wenn erfolgreich ausgeführt, false wenn Timeout oder Fehler
+ */
+bool SPI_guarded(const char* label, uint32_t timeout_ms, std::function<void()> fn);
 
 #endif

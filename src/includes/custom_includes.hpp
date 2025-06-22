@@ -13,5 +13,6 @@
 
 //RFID card handling
 #include <rfid/card.hpp>
+#include <rfid/rfid_module.hpp>
 
 #endif

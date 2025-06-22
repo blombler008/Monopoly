@@ -6,6 +6,7 @@
 #define AUX_UNMUTE LOW
 
 #include <utils/config.hpp>
+#include <helpers/helpers.hpp>
 #include <includes/includes.hpp>
 
 /**
