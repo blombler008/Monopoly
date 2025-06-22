@@ -40,7 +40,7 @@ void rfid_setup(SPIClass* v_spi) {
     mfrc522->PCD_DumpVersionToSerial(); // Dump the version of the MFRC522 reader to the serial console
     delay(10); // Wait for the reader to initialize   
 
-    byte version = mfrc522->PCD_ReadRegister(mfrc522->VersionReg); // Store the version in a byte variable
+    uint8_t version = mfrc522->PCD_ReadRegister(mfrc522->VersionReg); // Store the version in a byte variable
 
     while (version == 0x00) { // Check if the reader is present
         log_i("RFID Reader (Pin %d): Not found: 0x%02x", RFID_CS, version); // Log if the reader is not found 

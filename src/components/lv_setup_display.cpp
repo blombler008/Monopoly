@@ -38,28 +38,28 @@ void flush_display_buffer(lv_display_t *disp, const lv_area_t *area, uint8_t * p
 }
 
 void keypad_read_cb(lv_indev_t * indev, lv_indev_data_t* data) {
-    static uint8_t last_key = 0; // Variable to store the last key pressed
-    Keypad keypad = getKeypad(); // Get the keypad object
-    uint8_t key = keypad.getKey(); // Get the key pressed on the keypad
-    KeyState keyState = keypad.getState(); // Get the state of the key
+    // static uint8_t last_key = 0; // Variable to store the last key pressed
+    // Keypad keypad = getKeypad(); // Get the keypad object
+    // uint8_t key = keypad.getKey(); // Get the key pressed on the keypad
+    // KeyState keyState = keypad.getState(); // Get the state of the key
 
-    if(keyState == IDLE) { // Check if the key is idle
-        data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
-        data->key = last_key; // Set the key to the last key pressed
-        return; // Exit the function
-    }
+    // if(keyState == IDLE) { // Check if the key is idle
+    //     data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
+    //     data->key = last_key; // Set the key to the last key pressed
+    //     return; // Exit the function
+    // }
 
 
-    data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
-    data->key = key; // Set the key to the key pressed
+    // data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
+    // data->key = key; // Set the key to the key pressed
 
-    log_i("Key: %c, State: %d", key, keyState); // Log the key and state to the serial output
+    // log_i("Key: %c, State: %d", key, keyState); // Log the key and state to the serial output
 
-    if (key) {
-        data->state = LV_INDEV_STATE_PRESSED; // Check if the key is pressed
-    }
+    // if (key) {
+    //     data->state = LV_INDEV_STATE_PRESSED; // Check if the key is pressed
+    // }
 
-    last_key = key; // Set the last key to the current key
+    // last_key = key; // Set the last key to the current key
 }
 
 void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data) { 

@@ -2,10 +2,10 @@
 #ifndef INCLUDES_HPP
 #define INCLUDES_HPP
 
-#include <lv_conf.h>
+#include <lv_conf.h> 
 
-#include <Arduino.h>
-#include <keypad.h>
+#include <Arduino.h>  
+#include <I2CKeyPad.h>
 #include <SPI.h>
 #include <lvgl.h>
 #include <TFT_eSPI.h>

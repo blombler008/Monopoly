@@ -149,7 +149,7 @@ void setupMain() {
     pinMode(SD_DETECT_PIN, INPUT_PULLUP); // Set the SD card detect pin as input with pull-up resistor 
 
     // Alle CS-Pins deaktivieren (HIGH = inaktiv)
-    byte CSPins[] = {TFT_CS, TOUCH_CS, RFID_CS, SD_CS}; // Array of chip select pins for various peripherals
+    uint8_t CSPins[] = {TFT_CS, TOUCH_CS, RFID_CS, SD_CS}; // Array of chip select pins for various peripherals
 
     for (size_t i = 0; i < 4; i++) { 
         pinMode(CSPins[i], OUTPUT);
