@@ -23,10 +23,8 @@
  * 
  * RFID Readers:
  * - Reader 1:
- *   - CS Pin: RFID_CS1
- * - Reader 2:
- *   - CS Pin: RFID_CS2
- * 
+ *   - CS Pin: RFID_CS
+ *  
  * SD Card:
  * - CS Pin: SD_CS
  * 
