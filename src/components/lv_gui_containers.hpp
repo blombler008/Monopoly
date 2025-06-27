@@ -26,8 +26,7 @@ void setTimer(lv_timer_t* timer);
  * handle GUI updates and events. It should be called once during the setup phase of
  * the application to ensure the GUI operates correctly.
  */
-void lv_start_loop(void);
-void lv_stop_loop(void);
+void lv_start_loop(void); 
 
 /**
  * @brief Creates the Start GUI for the application.
@@ -51,6 +50,10 @@ void lv_create_start_gui(void);
 void remove_keyboard_and_clear_focus();
 void show_keyboard_on_click(lv_event_t * event, lv_obj_t* textInput);
 
+/////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////// HELPER  FUNCTIONS /////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
+
 
 /**
  * @brief Asserts that the given LittlevGL object is not NULL and is valid.
@@ -65,13 +68,31 @@ void show_keyboard_on_click(lv_event_t * event, lv_obj_t* textInput);
  * @throws std::runtime_error if the object is NULL or not valid.
  */
 lv_obj_t* lv_obj_assert_null(lv_obj_t* obj);
+
+/**
+ * @brief Creates a title underline for the given parent object with the specified title.
+ * 
+ * This function creates a text label with the specified title and aligns it to the top center
+ * of the parent object. It also creates a horizontal line below the title label to serve as an
+ * underline.
+ * 
+ * @param parent Pointer to the parent object where the title underline will be created.
+ * @param title The title text to be displayed in the label.
+ */
 void lv_create_title_underline(lv_obj_t* parent, const char* title);
+
+/////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// RFID CALLBACKS //////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
 
 void clear_rfid_callback();
 
 typedef void (*RFIDCallback)(const char* uid);
 void set_rfid_callback(RFIDCallback callback);
 
+/////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////// GUI CREATION FUNCTIONS ////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
 void lv_create_add_card_gui(const char* card_name);
 void lv_create_card_found_gui(Card* card);
 void lv_create_card_edit_gui(bool readOnly);

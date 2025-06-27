@@ -1,23 +1,7 @@
 #include <components/lv_gui_containers.hpp> 
 
 lv_obj_t* textInput_start_gui; 
-
-// Helper Functions
-void switch_to_add_card_gui() {
-    log_i("Switching to Card Add GUI");
-    // if(textInput_start_gui == NULL) {
-    //     log_e("Text Input is NULL?");
-    //     return;
-    // }
-    // const char* card_name_start_gui = lv_textarea_get_text(textInput_start_gui);
-    lv_screen_switch(ADD_CARD_GUI);
-}
-
-// Event Callbacks
-static void btn1_event_cb(lv_event_t * event) {
-    switch_to_add_card_gui();
-}
-
+  
 static void text_input_event_cb(lv_event_t * event) {
     lv_event_code_t code = lv_event_get_code(event);
     if(code == LV_EVENT_FOCUSED || code == LV_EVENT_READY || code == LV_EVENT_DEFOCUSED) {
@@ -70,18 +54,7 @@ void lv_create_start_gui_async(void*) {
     lv_obj_t * btn_settings_label = lv_label_create(btn_settings);
     lv_label_set_text(btn_settings_label, "Einstellungen");
     lv_obj_center(btn_settings_label);
-
-    // Create a Button (btn1)
-    lv_obj_t * btn1 = lv_button_create(src);
-    lv_obj_add_event_cb(btn1, btn1_event_cb, LV_EVENT_CLICKED, NULL);
-    lv_obj_align(btn1, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_remove_flag(btn1, LV_OBJ_FLAG_PRESS_LOCK);
-
-    lv_obj_t * btn_label = lv_label_create(btn1);
-    lv_label_set_text(btn_label, "Karte hinzufügen");
-    lv_obj_center(btn_label);
-
-
+  
     // Create a Button (btn2) that plays a sound 
     lv_obj_t * btn2 = lv_button_create(src);
     lv_obj_add_event_cb(btn2, [](lv_event_t * event) {

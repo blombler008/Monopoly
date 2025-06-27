@@ -1,5 +1,16 @@
 #include <components/lv_gui_containers.hpp> 
 
+
+    
+  
+// Event Callbacks
+void card_add_button_cb(lv_event_t * event) {
+    log_i("Card Add Button clicked. Switching to Add Card GUI");
+    lv_screen_switch(ADD_CARD_GUI);
+}
+
+
+
 void btn1_event_cb(lv_event_t * e) {
     // Get the button object
     lv_obj_t * btn = (lv_obj_t *)lv_event_get_target(e);
@@ -9,7 +20,7 @@ void btn1_event_cb(lv_event_t * e) {
     
     // Log the button click event
     log_i("Settings Saved clicked, user data: %p", user_data);
-    // TODO: Add functionality for the button click event
+    // TODO: Add function-ality for the button click event
 
     // Here you can add more functionality, like opening a settings menu or changing settings
     // Quick text showing the button was clicked onscreen like a toast
@@ -37,11 +48,21 @@ void btn1_event_cb(lv_event_t * e) {
 }
 
 void lv_create_settings_gui_async(void* param) {
+    lv_obj_t* src = lv_obj_assert_null(lv_screen_active());
     // Create a text label aligned center on top ("Settings")
-    lv_obj_t * text_label = lv_label_create(lv_screen_active());
-    lv_label_set_text(text_label, "Einstellungen");
-    lv_obj_set_style_text_align(text_label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(text_label, LV_ALIGN_CENTER, 0, -90);
+    lv_create_title_underline(src, "Einstellungen");
+  
+
+
+    // Create a Button for adding Cards (card_add_button)
+    lv_obj_t * card_add_button = lv_button_create(src);
+    lv_obj_add_event_cb(card_add_button, card_add_button_cb, LV_EVENT_CLICKED, NULL);
+    lv_obj_align(card_add_button, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_remove_flag(card_add_button, LV_OBJ_FLAG_PRESS_LOCK);
+
+    lv_obj_t * card_add_button_label = lv_label_create(card_add_button);
+    lv_label_set_text(card_add_button_label, "Karte hinzufügen");
+    lv_obj_center(card_add_button_label);
 
     // Create a Button (btn1)
     lv_obj_t * btn1 = lv_button_create(lv_screen_active());
