@@ -119,7 +119,7 @@ void rfid_loop() {
 
     // Check if the tag matches any predefined tags
     if (compare_tag(tag, rfid_tags, sizeof(rfid_tags) / sizeof(RFIDTag))) { 
-        // return;
+        return;
     } else {
         log_i("RFID Reader (Pin %d): No matching tag found: \"%s\"", RFID_CS, tag); // Log if no matching tag is found
     }

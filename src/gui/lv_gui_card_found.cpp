@@ -13,10 +13,9 @@ void switch_to_remove_card_gui() {
 // Function to save card name on Enter
 void save_card_name_on_enter() { 
     const char* next_card_name = lv_textarea_get_text(textInput_card_found);
-    
-    if(strcmp(card_name_card_found, next_card_name)) return;
-
-    card->setName(card_name_card_found);
+    if(strcmp(card_name_card_found, next_card_name))  { 
+        card->setName(next_card_name);
+    }
     cardCollection.save_card(card); 
 }
 
@@ -30,6 +29,17 @@ static void screen_event_cb(lv_event_t * event) {
 static void text_input_event_cb(lv_event_t * event) {
     lv_event_code_t code = lv_event_get_code(event);
     show_keyboard_on_click(event, textInput_card_found); 
+    if(code == LV_EVENT_INSERT ) {
+        lv_indev_t* indev = lv_indev_get_act();
+        if(indev == NULL) return; // No input device active
+
+        uint32_t key = lv_indev_get_key(indev);
+        if(key == LV_KEY_ENTER) {
+            save_card_name_on_enter();
+            switch_to_remove_card_gui();
+            return;
+        }
+    }
     if(code == LV_EVENT_READY) {
         save_card_name_on_enter();
         switch_to_remove_card_gui();
@@ -73,7 +83,7 @@ void lv_create_card_found_gui_async(void* card_ptr) {
 
     // Create Save button
     lv_obj_t* save_btn = lv_obj_assert_null(lv_btn_create(scr));
-    lv_obj_align(save_btn, LV_ALIGN_CENTER, -50, 50);
+    lv_obj_align(save_btn, LV_ALIGN_CENTER, -55, 50);
     lv_obj_t* save_label = lv_label_create(save_btn);
     lv_label_set_text(save_label, "Speichern");
     lv_obj_add_event_cb(save_btn, [](lv_event_t* event) {
@@ -83,7 +93,7 @@ void lv_create_card_found_gui_async(void* card_ptr) {
 
     // Create Cancel button
     lv_obj_t* cancel_btn = lv_obj_assert_null(lv_btn_create(scr));
-    lv_obj_align(cancel_btn, LV_ALIGN_CENTER, 50, 50);
+    lv_obj_align(cancel_btn, LV_ALIGN_CENTER, 55, 50);
     lv_obj_t* cancel_label = lv_label_create(cancel_btn);
     lv_label_set_text(cancel_label, "Abbrechen");
     lv_obj_add_event_cb(cancel_btn, [](lv_event_t* event) {

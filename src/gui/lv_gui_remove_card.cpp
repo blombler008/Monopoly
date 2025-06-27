@@ -25,6 +25,10 @@ void on_cancel_click(lv_event_t * e) {
 
 void lv_create_remove_card_gui_async(void* user_card_ptr) {
     Card* user_card = static_cast<Card*>(user_card_ptr);
+    if(user_card == NULL) {
+        log_e("lv_create_remove_card_gui_async: user_card is NULL");
+        return;
+    } 
     card_to_remove = user_card; 
 
     lv_obj_t* src = lv_obj_assert_null(lv_screen_active());

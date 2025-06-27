@@ -7,11 +7,12 @@
 class Card {
 public:
     Card(const char* uid, const char* name, int32_t balance);
-    Card(const Card* card);
+    Card(const Card& card); 
     Card() {};
     ~Card();
     bool operator==(const Card* card);
     bool operator==(const Card& card);
+    Card& operator=(const Card& other);
     char* getUID() const;
     int getNumber() const;
     char* getName() const;
@@ -22,9 +23,9 @@ public:
     void setBalance(int32_t balance);
 
 private:
-    char* uid = new char[0];
+    char* uid = nullptr;
     int number = 0;
-    char* name = new char[0];
+    char* name = nullptr;
     int32_t balance = 0;
 };
 
@@ -42,7 +43,7 @@ public:
     int getNextCardNumber() { return next_card_number; }
 private:
     Card* card_collection;
-    size_t card_count;
+    uint8_t card_count = 0 ;
     int next_card_number;
     int current_max_cards;
 };
