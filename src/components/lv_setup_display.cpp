@@ -106,7 +106,7 @@ void lv_setup_display(void) {
     }
     
     log_i("TFT setup"); // Log the completion of the display setup
-    lv_display_set_rotation(displayInstance, LV_DISPLAY_ROTATION_270); // Set the display rotation 
+    lv_display_set_rotation(displayInstance, LV_DISPLAY_ROTATION_90); // Set the display rotation 
     displayDriver->tft->setTouch(calData); // Calibrate the touch screen using the predefined calibration data 
     log_i("Touch screen calibrated"); // Log the calibration of the touch screen
 

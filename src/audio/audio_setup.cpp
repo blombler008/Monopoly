@@ -46,8 +46,9 @@ void audio_setup() {
     audio_mute();
 
     audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-    audio.setVolume(12); 
+    audio.setVolume(5); 
     audio.setTone(-3,-3,-12); 
+    audio_mute();
     log_i("Audio Driver initialized");
  
 }
