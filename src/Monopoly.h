@@ -1,10 +1,9 @@
 /**
- * @file lv_gif_private.h
- *
+ * @file Monopoly.h
  */
 
-#ifndef LV_GIF_PRIVATE_H
-#define LV_GIF_PRIVATE_H
+#ifndef MONOPOLY_H
+#define MONOPOLY_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,11 +12,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-
-#include "../../widgets/image/lv_image_private.h"
-#include "lv_gif.h"
-
-#if LV_USE_GIF
+#include "Monopoly_GUI/Monopoly_gen.h"
 
 /*********************
  *      DEFINES
@@ -28,30 +23,24 @@ extern "C" {
  **********************/
 
 /**********************
- *      TYPEDEFS
+ * GLOBAL VARIABLES
  **********************/
-
-struct _lv_gif_t {
-    lv_image_t img;
-    gd_GIF * gif;
-    lv_timer_t * timer;
-    lv_image_dsc_t imgdsc;
-    uint32_t last_call;
-};
-
 
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
 
+/**
+ * Initialize the component library
+ */
+void Monopoly_init(const char * asset_path);
+
 /**********************
  *      MACROS
  **********************/
-
-#endif /* LV_USE_GIF */
 
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
-#endif /*LV_GIF_PRIVATE_H*/
+#endif /*MONOPOLY_H*/

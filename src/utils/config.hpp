@@ -1,6 +1,5 @@
 #ifndef CONFIG_HPP
-#define CONFIG_HPP
-
+#define CONFIG_HPP 
 #ifndef ota
     #define ota 0
 #endif

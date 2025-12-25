@@ -1,16 +1,12 @@
 /**
- * @file lv_opengles_debug.c
- *
+ * @file Monopoly.c
  */
 
 /*********************
  *      INCLUDES
  *********************/
 
-#include "lv_opengles_debug.h"
-#if LV_USE_OPENGLES
-
-#include "../../misc/lv_log.h"
+#include "Monopoly.h"
 
 /*********************
  *      DEFINES
@@ -36,21 +32,12 @@
  *   GLOBAL FUNCTIONS
  **********************/
 
-void GLClearError()
+void Monopoly_init(const char * asset_path)
 {
-    while(glGetError() != GL_NO_ERROR);
-}
-
-void GLLogCall(const char * function, const char * file, int line)
-{
-    GLenum error;
-    while((error = glGetError()) != GL_NO_ERROR) {
-        LV_LOG_ERROR("[OpenGL Error] (%d) %s %s:%d", error, function, file, line);
-    }
+    Monopoly_init_gen(asset_path); 
+    /* Add your own custom code here if needed */
 }
 
 /**********************
  *   STATIC FUNCTIONS
  **********************/
-
-#endif /* LV_USE_OPENGLES */

@@ -3,7 +3,7 @@
 GameSettings defaultSettings = {
     .maxPlayers = 4,             // maxPlayers
     .startingMoney = 1500,       // startingMoney 
-    .currency = (char*)"₩"       // currency
+    .currency = (char*)"M"       // currency
 };
 
 void setMaxPlayers(int maxPlayers) {
