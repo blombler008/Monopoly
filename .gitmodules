@@ -1,3 +1,6 @@
 [submodule "src/Monopoly_GUI"]
 	path = src/Monopoly_GUI
 	url = https://github.com/blombler008/Monopoly-GUI
+[submodule "libs/rfid"]
+	path = libs/rfid
+	url = https://github.com/blombler008/rfid
