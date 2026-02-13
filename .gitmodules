@@ -1,6 +1,6 @@
-[submodule "Monopoly_GUI"]
-	path = Monopoly_GUI
-	url = https://github.com/blombler008/Monopoly-GUI
 [submodule "libs/rfid"]
 	path = libs/rfid
 	url = https://github.com/blombler008/rfid
+[submodule "Monopoly_GUI"]
+	path = Monopoly_GUI
+	url = https://github.com/blombler008/Monopoly-GUI.git
