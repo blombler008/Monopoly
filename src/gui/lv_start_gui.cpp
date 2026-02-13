@@ -1,5 +1,4 @@
 #include <components/lv_gui_containers.hpp> 
-#include <Monopoly.h>
 
 lv_obj_t* textInput_start_gui; 
 
@@ -29,8 +28,8 @@ void lv_start_loop(void) {
 // GUI Creation
 void lv_create_start_gui_async(void*) { 
     // Create a text label aligned center on top ("Monopoly Banking")
-    Monopoly_init("/sd/");
-    lv_screen_load(welcome);
+    // Monopoly_init("/sd/");
+    // lv_screen_load(welcome);
     // lv_obj_t* src = lv_obj_assert_null(lv_screen_active());
     // lv_create_title_underline(src, "Monopoly Banking ₩");
      
