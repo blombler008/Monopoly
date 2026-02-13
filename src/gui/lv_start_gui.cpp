@@ -30,8 +30,9 @@ void lv_create_start_gui_async(void*) {
     // Create a text label aligned center on top ("Monopoly Banking")
     // Supported Languages: English ( "en" ), Deutsch ( "de" )  
     // default = en
-    lv_translation_set_language("en"); 
     Monopoly_init("/sd/");
+    lv_translation_set_language("en"); 
+    lv_xml_register_component_from_file("languages.xml");
     lv_screen_load(welcome);
     // lv_obj_t* src = lv_obj_assert_null(lv_screen_active());
     // lv_create_title_underline(src, "Monopoly Banking ₩");
