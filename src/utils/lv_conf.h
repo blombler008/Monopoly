@@ -849,6 +849,14 @@
     #define LV_FILE_EXPLORER_QUICK_ACCESS        1
 #endif
 
+/** Enable loading XML UIs runtime */
+#define LV_USE_XML    1
+
+/** 1: Enable text translation support */
+#define LV_USE_TRANSLATION 1
+
+
+
 /*==================
  * DEVICES
  *==================*/
