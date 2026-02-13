@@ -2,5 +2,5 @@
 	path = libs/rfid
 	url = https://github.com/blombler008/rfid
 [submodule "Monopoly_GUI"]
-	path = Monopoly_GUI
+	path = libs/Monopoly_GUI
 	url = https://github.com/blombler008/Monopoly-GUI.git
