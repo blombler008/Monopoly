@@ -1,5 +1,7 @@
 #include <components/lv_gui_containers.hpp> 
 
+#include <core/settings.h>
+
 Card* card_scanned = NULL;
 const char* default_card_name_add_card = "Neue Karte";
 char card_name_add_card[21] = "Neue Karte";
@@ -29,7 +31,7 @@ void switch_to_start_screen(lv_event_t * e) {
 
 void rfid_card_scanned(const char* uid) {
     // Handle the scanned RFID card  
-    card_scanned = new Card(uid, card_name_add_card, /*gameSettings.economy.startCash*/ 1500);
+    card_scanned = new Card(uid, card_name_add_card, coreSettings.economy.startCash);
     log_i("Card: UID=%s, Number=%d, Name=%s, Balance=%d", card_scanned->getUID(), card_scanned->getNumber(), card_scanned->getName(), card_scanned->getBalance());
     
     // Switch to the card found GUI
