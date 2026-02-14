@@ -224,7 +224,7 @@
     *LV_LOG_LEVEL_USER        Only logs added by the user
     *LV_LOG_LEVEL_NONE        Do not log anything*/
     
-    #define LV_LOG_LEVEL LV_LOG_LEVEL_INFO
+    #define LV_LOG_LEVEL LV_LOG_LEVEL_ERROR
 
     /*1: Print the log with 'printf';
     *0: User need to register a callback with `lv_log_register_print_cb()`*/
@@ -427,10 +427,10 @@
 /*Optionally declare custom fonts here.
  *You can use these fonts as default font too and they will be available globally.
  *E.g. #define LV_FONT_CUSTOM_DECLARE   LV_FONT_DECLARE(my_font_1) LV_FONT_DECLARE(my_font_2)*/
-#define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(lv_font_montserrat_14_n)
+ 
 
 /*Always set a default font*/
-#define LV_FONT_DEFAULT &lv_font_montserrat_14_n
+#define LV_FONT_DEFAULT &lv_font_montserrat_14
 
 /*Enable handling large font and/or fonts with a lot of characters.
  *The limit depends on the font size, font face and bpp.
@@ -619,6 +619,12 @@
  *====================*/
 
 /*File system interfaces for common APIs */
+
+/*API for fopen, fread, etc*/
+#define LV_USE_FS_ARDUINO_SD 1
+#if LV_USE_FS_ARDUINO_SD
+    #define LV_FS_ARDUINO_SD_LETTER 'S'   /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
+#endif
 
 /*API for fopen, fread, etc*/
 #define LV_USE_FS_STDIO 0

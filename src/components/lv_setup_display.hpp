@@ -21,9 +21,8 @@
 #include <includes/includes.hpp>
 #include "lv_gui_containers.hpp"
 
-#define TFT_FONT &lv_font_montserrat_14_n
-#define DRAW_BUF_SIZE (TFT_SCREEN_WIDTH * TFT_SCREEN_HEIGHT / 10 * (LV_COLOR_DEPTH / 8))
-
+ // 2 bytes per pixel for 16-bit color depth
+#define DRAW_BUF_SIZE ((TFT_SCREEN_WIDTH * TFT_SCREEN_HEIGHT * 2) / 6 )
 
 /**
  * @brief Initializes and sets up the LVGL display and touch input.
@@ -39,5 +38,6 @@
  */
 void lv_setup_display(void);
 void lvgl_print_version(void);
+void watch_dma();
 
 #endif

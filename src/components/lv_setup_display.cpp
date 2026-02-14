@@ -1,4 +1,5 @@
 #include "lv_setup_display.hpp"
+#include "esp_heap_caps.h"
 
 /**
  * @struct lv_tft_espi_t
@@ -12,6 +13,8 @@
  */
 typedef struct {
     TFT_eSPI * tft;
+    lv_display_t * disp;
+    bool dma_busy;
 } lv_tft_espi_t;
 
 lv_obj_t* textInput;
@@ -22,21 +25,47 @@ lv_display_t * displayInstance;
 lv_indev_t * touchInputDevice;
 lv_indev_t * keypadInputDevice;
 lv_group_t* keypadGroup;
-lv_timer_t* timer;
-
+lv_timer_t* timer;  
 uint16_t colors[] = {ILI9341_PURPLE, ILI9341_RED, ILI9341_BLUE, ILI9341_GREEN, ILI9341_ORANGE, ILI9341_YELLOW, ILI9341_CYAN, ILI9341_MAGENTA, ILI9341_WHITE};
-uint32_t draw_buf[DRAW_BUF_SIZE / 4];
+
+static lv_color_t* draw_buf_1 = nullptr;
+static lv_color_t* draw_buf_2 = nullptr;
+size_t pixel_count = DRAW_BUF_SIZE; // z.B. 80 lines
+
+void init_lvgl_buffer()
+{ 
+
+log_i("Free INTERNAL: %u", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+log_i("Free DMA: %u", heap_caps_get_free_size(MALLOC_CAP_DMA));
+log_i("Allocating: %u bytes", pixel_count * sizeof(lv_color_t));
+    draw_buf_1 = (lv_color_t*)heap_caps_malloc(
+        pixel_count * sizeof(lv_color_t),
+        // MALLOC_CAP_DMA
+        MALLOC_CAP_SPIRAM
+    );
+    draw_buf_2 = (lv_color_t*)heap_caps_malloc(
+        pixel_count * sizeof(lv_color_t),
+        // MALLOC_CAP_DMA
+        
+        MALLOC_CAP_SPIRAM
+    );
+
+    if (!draw_buf_1 || !draw_buf_2) {
+        log_e("DMA allocation failed!");
+        while (true);
+    }
+
+    log_i("LVGL buffer allocated in DMA memory");
+}
+
+
 
 void lv_log(lv_log_level_t level, const char * buf) {
     LV_UNUSED(level);
     Serial.println(buf);
     Serial.flush();
 }
-
-void flush_display_buffer(lv_display_t *disp, const lv_area_t *area, uint8_t * px_map) {
-    lv_display_flush_ready(disp);
-}
-
+ 
 void keypad_read_cb(lv_indev_t * indev, lv_indev_data_t* data) {
     static uint8_t last_key = 0; // Variable to store the last key pressed
     I2CKeyPad keypad = getKeypad(); // Get the keypad object
@@ -91,14 +120,17 @@ void lvgl_print_version() {
     log_i("%s", LVGL_Arduino); // Log the version string to the serial output
 }
 
+
 void lv_setup_display(void) {
+    init_lvgl_buffer(); // Initialize the LVGL buffer
     lvgl_print_version(); // Log the version of LVGL for compatibility
     uint16_t calData[5] = TFT_CALLIBRATION_DATA; 
     lv_init(); // Initialize the LVGL library
     log_i("LVGL initialized"); // Log the initialization of LVGL
       
     lv_tick_set_cb(tick_wrapper); // Set the tick callback function for LVGL
-    displayInstance = lv_tft_espi_create(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT, draw_buf, sizeof(draw_buf)); // Create a display using the TFT_eSPI library
+    
+    displayInstance = lv_tft_espi_create(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT, draw_buf_1, draw_buf_2, pixel_count * sizeof(lv_color_t)); // Create a display using the TFT_eSPI library
     displayDriver = (lv_tft_espi_t*)lv_display_get_driver_data(displayInstance); // Get the display driver data
     if (displayDriver == NULL) {
         log_e("Failed to get display driver data");
