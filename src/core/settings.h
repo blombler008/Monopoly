@@ -1,10 +1,12 @@
 #pragma once
+#ifndef SETTINGS_H
+#define SETTINGS_H
 #include <ArduinoJson.h>
 #include <SD.h>
 #include <string>
 
 struct EconomySettings {
-    int startCash = 1500;
+    int32_t startCash = 1500;
     int passGoCash = 200;
     bool allowCredit = true;
     int taxFixedAmount = 100;
@@ -42,3 +44,8 @@ private:
     bool dirty = false;
     void markDirty() { dirty = true; }
 };
+
+// Create an instance of the Settings class to manage game settings
+extern Settings coreSettings; 
+
+#endif // SETTINGS_H

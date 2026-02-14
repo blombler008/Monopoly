@@ -21,7 +21,7 @@ bool Settings::load()
     File file = SD.open(SETTINGS_PATH, FILE_READ);
     if (!file) return false;
 
-    DynamicJsonDocument doc(8192);
+    JsonDocument doc;
 
     DeserializationError err = deserializeJson(doc, file);
     file.close();
@@ -65,7 +65,7 @@ bool Settings::load()
 // ------------------------------------------------------------
 void Settings::save()
 {
-    DynamicJsonDocument doc(8192);
+    JsonDocument doc;
 
     doc["schema_version"] = SCHEMA_VERSION;
 
@@ -113,3 +113,7 @@ void Settings::autosave()
         save();
     }
 }
+
+
+Settings coreSettings; 
+

@@ -33,10 +33,10 @@ void lv_start_loop(void) {
     //     NULL,
     //     1   // Core 1 empfohlen
     // );
-    TimerHandle_t lvglTickTimer = xTimerCreate("lvglTick", pdMS_TO_TICKS(5), pdTRUE, NULL, [](TimerHandle_t xTimer){
-        lv_tick_inc(5);
-    });
-    xTimerStart(lvglTickTimer, 0);
+    // TimerHandle_t lvglTickTimer = xTimerCreate("lvglTick", pdMS_TO_TICKS(5), pdTRUE, NULL, [](TimerHandle_t xTimer){
+    //     lv_tick_inc(5);
+    // });
+    // xTimerStart(lvglTickTimer, 0);
 }
 
 
