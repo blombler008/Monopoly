@@ -70,6 +70,9 @@ SPIClass* h_spi = new SPIClass(HSPI);
  */
 SPIClass* v_spi = new SPIClass(VSPI); 
 
+// Create an instance of the Settings class to manage game settings
+Settings gameSettings; 
+
 void make_bargraph(int numChars, float usedPercentage, char* label) {
     int num_hashes = static_cast<int>(usedPercentage / 2); 
     num_hashes = std::min(num_hashes, numChars);  
@@ -151,6 +154,7 @@ void setupMain() {
     if(SD.begin(SD_CS, *v_spi, num_to_mhz(4))) { // Initialize the SD card on the HSPI bus [4 MHz]
         is_sd_card_initialized = true; // Set the flag indicating SD card is initialized
         log_i("SD Card initialized successfully!"); // Log success message for SD card initialization
+        gameSettings.load();
 #if USE_AUDIO
         audio_setup(); // Set up the audio system
         audio_start_loop();  // Start the audio loop for service 

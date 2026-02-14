@@ -15,4 +15,7 @@
 #include <rfid/card.hpp>
 #include <rfid/rfid_module.hpp>
 
+// GAME LOGIC
+#include <core/Settings.h>
+
 #endif

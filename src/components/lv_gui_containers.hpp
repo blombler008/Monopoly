@@ -4,7 +4,6 @@
 
 #include <utils/config.hpp>
 #include <includes/includes.hpp>
-#include <settings/settings.hpp>
 #include <audio/audio.hpp>
 #include <helpers/helpers.hpp>
 #include <keypad/keypad.hpp>

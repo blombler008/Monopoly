@@ -23,7 +23,10 @@
 #define USER_SETUP_INFO "User_Setup" 
 // Define to disable all #warnings in library (can be put in User_Setup_Select.h)
 // #define DISABLE_ALL_LIBRARY_WARNINGS
-
+#define ESP32_DMA 
+#define USE_DMA
+#define SPI_DMA_CHAN 1
+#undef TFT_PARALLEL_8_BIT
 // ##################################################################################
 //
 // Section 1. Call up the right driver file and any options for it
