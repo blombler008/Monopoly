@@ -9,46 +9,44 @@
 
 // MONITOR SEETINGS
 #define MONITOR_SPEED MONITOR_BAUD_7
-
-// SPI SETTINGS
-#define VSPI_SPEED num_to_mhz(10)
-
-// Touch + Display SPI PINS + RFID SPI BUS 
+ 
+// HSPI BUS === Touch + Display + RFID 
 #define HSPI_MISO    12
 #define HSPI_MOSI    13
 #define HSPI_SCK     14
 
-// SD CARD SPI BUS
-#define FSPI_MISO  15
-#define FSPI_MOSI  16
-#define FSPI_SCK   17
+// VSPI BUS === SD CARD 
+#define VSPI_MISO  15
+#define VSPI_MOSI  16
+#define VSPI_SCK   17
 
 // I2C SETTINGS
 #define I2C_SDA 6 // SDA pin for I2C communication
 #define I2C_SCL 7 // SCL pin for I2C communication
 
-// TFT SETTINGS
-#define TFT_ROTATION TFT_LANDSCAPE_1
-#define TFT_SCREEN_WIDTH 240
-#define TFT_SCREEN_HEIGHT 320 
+// TFT SETTINGS 
+#define TFT_SCREEN_WIDTH 320
+#define TFT_SCREEN_HEIGHT 240
 // TFT PINS
-
+ 
 #define TFT_MISO HSPI_MISO
 #define TFT_MOSI HSPI_MOSI
 #define TFT_SCLK HSPI_SCK
 #define TFT_CS      9 // Chip select control pin
 #define TFT_DC      11 // Data Command control pin 
-#define TFT_RST     -1 //21  //47
-#define TFT_CALLIBRATION_DATA { 178, 3717, 406, 3360, 7 } // Calibration data for the touch screen change this if needed
+#define TFT_RST     -1 //21  //47 
+#define TFT_CALLIBRATION_DATA { 250, 3351, 330, 3414, 1 }; // Calibration data for the touch screen change this if needed
 #define TOUCH_CS    10
 
 // RFID Settings  
-#define RFID_CS     5 
+#define RFID_CS     5  
+#define RFID_SPI_SPEED num_to_mhz(4) // SPI speed for RFID communication (4 MHz)
 
 // SD Settings
 #define SD_CS       4
 #define SD_DETECT_PIN 2
 #define SD_STATUS_LED 8
+#define SD_SPI_SPEED num_to_mhz(10) // SPI speed for SD card communication (10 MHz)
 
 // Audio Settings
 #define I2S_MUTE    42

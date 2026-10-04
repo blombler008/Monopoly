@@ -8,7 +8,10 @@
 #include <components/lv_gui_containers.hpp>
 
 
+
 void rfid_setup(SPIClass* v_spi = &SPI);
-void rfid_loop();
+bool rfid_loop();
+void enable_rfid_scan();
+
 
 #endif // RFID_MODULE_HPP

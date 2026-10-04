@@ -28,32 +28,62 @@ lv_group_t* keypadGroup;
 lv_timer_t* timer;  
 uint16_t colors[] = {ILI9341_PURPLE, ILI9341_RED, ILI9341_BLUE, ILI9341_GREEN, ILI9341_ORANGE, ILI9341_YELLOW, ILI9341_CYAN, ILI9341_MAGENTA, ILI9341_WHITE};
 
-static lv_color_t* draw_buf_1 = nullptr;
-static lv_color_t* draw_buf_2 = nullptr;
-size_t pixel_count = DRAW_BUF_SIZE; // z.B. 80 lines
+#define DTFT_WIDTH        320
+#define DTFT_HEIGHT       240   
+#define DMA_BUF_BYTES    (DTFT_WIDTH * DTFT_HEIGHT * 2) / 8 // buffer size in bytes, for 240 lines of the display (320*240*2 bytes for 16-bit color depth)
+static lv_color16_t* draw_buf_1 = nullptr;
+static lv_color16_t* draw_buf_2 = nullptr; 
 
-void init_lvgl_buffer()
-{ 
+static size_t pixel_count = DMA_BUF_BYTES / sizeof(lv_color16_t); 
 
-log_i("Free INTERNAL: %u", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
-log_i("Free DMA: %u", heap_caps_get_free_size(MALLOC_CAP_DMA));
-log_i("Allocating: %u bytes", pixel_count * sizeof(lv_color_t));
-    draw_buf_1 = (lv_color_t*)heap_caps_malloc(
-        pixel_count * sizeof(lv_color_t),
+
+static lv_tft_espi_t* g_disp = nullptr;
+static volatile bool dma_active = false;
+
+static void dma_timer_cb(void* pvParameters) {
+    
+    for (;;)  {       
+        if (dma_active && !g_disp->tft->dmaBusy()) {
+            dma_active = false;
+
+            g_disp->tft->endWrite();
+
+            lv_disp_flush_ready(g_disp->disp);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(1));   // 1ms Polling reicht
+    } 
+}
+
+// getbuffer
+lv_color16_t* getNewBuffer(){
+    return (lv_color16_t*)heap_caps_malloc(
+        DMA_BUF_BYTES,
         // MALLOC_CAP_DMA
-        MALLOC_CAP_SPIRAM
+        // MALLOC_CAP_8BIT
+        // MALLOC_CAP_DEFAULT 
+        // MALLOC_CAP_INTERNAL
+        // MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA
+        // MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT
+        // MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA | MALLOC_CAP_8BIT
+        MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA | MALLOC_CAP_8BIT
     );
-    draw_buf_2 = (lv_color_t*)heap_caps_malloc(
-        pixel_count * sizeof(lv_color_t),
-        // MALLOC_CAP_DMA
-        
-        MALLOC_CAP_SPIRAM
-    );
+}
+
+void init_lvgl_buffer() { 
+
+    log_i("Free INTERNAL: %u", heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+    log_i("Free DMA: %u", heap_caps_get_free_size(MALLOC_CAP_DMA));
+    log_i("Allocation per buffer: %u bytes, total %u bytes", DMA_BUF_BYTES, DMA_BUF_BYTES * 2);
+    draw_buf_1 = getNewBuffer();
+    draw_buf_2 = getNewBuffer();
 
     if (!draw_buf_1 || !draw_buf_2) {
         log_e("DMA allocation failed!");
         while (true);
     }
+    log_i("Buf1 addr: %p", draw_buf_1);
+    log_i("Buf2 addr: %p", draw_buf_2);
 
     log_i("LVGL buffer allocated in DMA memory");
 }
@@ -62,8 +92,7 @@ log_i("Allocating: %u bytes", pixel_count * sizeof(lv_color_t));
 
 void lv_log(lv_log_level_t level, const char * buf) {
     LV_UNUSED(level);
-    Serial.println(buf);
-    Serial.flush();
+    log_i("LVGL: %s", buf); 
 }
  
 void keypad_read_cb(lv_indev_t * indev, lv_indev_data_t* data) {
@@ -91,27 +120,65 @@ void keypad_read_cb(lv_indev_t * indev, lv_indev_data_t* data) {
     last_key = key; // Set the last key to the current key
 }
 
-void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data) { 
-    uint16_t touchpad_x, touchpad_y; // Variables to store the touchpad coordinates
-    bool touchpad_pressed = displayDriver->tft->getTouch(&touchpad_x, &touchpad_y, 300); // Get the touchpad coordinates 
-    
-    uint16_t raw_touchpad_x, raw_touchpad_y; // Variables to store the touchpad coordinates
-    bool raw_touchpad_pressed = displayDriver->tft->getTouchRaw(&raw_touchpad_x, &raw_touchpad_y); // Get the raw touchpad coordinates
-    // log_i("Raw Touch: x=%d, y=%d, pressed=%d", raw_touchpad_x, raw_touchpad_y, raw_touchpad_pressed); // Log the raw touch coordinates and state to the serial output
-    if (touchpad_pressed) { // Check if the touchpad is pressed
-        data->point.y = touchpad_x; // swap x and y
-        data->point.x = 240 - touchpad_y;  // swap x and y and invert x
-        data->state = LV_INDEV_STATE_PRESSED; // Set the state to pressed
-    } else {
-        data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
+void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data)
+{
+    static uint16_t x, y;
+ 
+    if( display_dma_is_active() ) {
+        data->state = LV_INDEV_STATE_RELEASED;
+        return;
     }
 
-    // log_i("Touch: x=%d, y=%d, state=%d", data->point.x, data->point.y, data->state); // Log the touch coordinates and state to the serial output
-    
+    if(displayDriver->tft->getTouch(&x, &y, 350)) { 
+        // Invert the touch coordinates to match the display orientation and swap x and y
+        data->point.x = x;
+        data->point.y = y; // Invert y coordinate to match display orientation
+
+        // draw a crosshair at the touch point for debugging
+            // displayDriver->tft->drawLine(x - 10, y, x + 10, y, TFT_RED);
+            // displayDriver->tft->drawLine(x, y - 10, x, y + 10, TFT_RED);
+        // also draw lvgl's idea of the touch point for debugging
+        //    static lv_obj_t * dot;
+
+        //     dot = lv_obj_create(lv_screen_active());
+        //     lv_obj_set_size(dot, 8, 8);
+        //     lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+        //     lv_obj_set_style_bg_color(dot, lv_color_hex(0x00FF00), 0);
+        //     lv_obj_set_style_border_width(dot, 0, 0);
+
+        //     lv_obj_set_pos(dot, data->point.x - 4, data->point.y - 4);
+        // log_i("Converted Touch: x=%d\t, y=%d\t", data->point.x, data->point.y); // Log the converted touch coordinates to the serial output
+        data->state = LV_INDEV_STATE_PRESSED;
+    }
+    else
+    {
+        data->state = LV_INDEV_STATE_RELEASED;
+    }
 }
 
+// void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data) { 
+//     uint16_t touchpad_x, touchpad_y; // Variables to store the touchpad coordinates
+ 
+//     bool touchpad_pressed = displayDriver->tft->getTouch(&touchpad_x, &touchpad_y, 300); // Get the touchpad coordinates 
+//     // log_i("Touch: x=%d, y=%d, pressed=%d", touchpad_x, touchpad_y, touchpad_pressed); // Log the touch coordinates and state to the serial output
+//     // uint16_t raw_touchpad_x, raw_touchpad_y; // Variables to store the touchpad coordinates
+//     // bool raw_touchpad_pressed = displayDriver->tft->getTouchRaw(&raw_touchpad_x, &raw_touchpad_y); // Get the raw touchpad coordinates
+//     // log_i("Raw Touch: x=%d, y=%d, pressed=%d", raw_touchpad_x, raw_touchpad_y, raw_touchpad_pressed); // Log the raw touch coordinates and state to the serial output
+    
+//     if (touchpad_pressed) { // Check if the touchpad is pressed
+//         data->point.y = touchpad_x; // swap x and y
+//         data->point.x = 240 - touchpad_y;  // swap x and y and invert x
+//         data->state = LV_INDEV_STATE_PRESSED; // Set the state to pressed
+//     } else {
+//         data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
+//     }
+
+//     // log_i("Touch: x=%d, y=%d, state=%d", data->point.x, data->point.y, data->state); // Log the touch coordinates and state to the serial output
+    
+// }
+
 static uint32_t tick_wrapper(void) {
-    return millis();
+    return esp_timer_get_time() / 1000; // Return the current time in milliseconds
 }
 
 void lvgl_print_version() {
@@ -120,6 +187,51 @@ void lvgl_print_version() {
     log_i("%s", LVGL_Arduino); // Log the version string to the serial output
 }
 
+// Code to run a screen calibration, not needed when calibration values set in setup()
+void touch_calibrate(TFT_eSPI * tftref)
+{
+
+  TFT_eSPI tft = *tftref; 
+  uint16_t calData[5];
+  uint8_t calDataOK = 0;
+
+  // Calibrate
+  tft.fillScreen(TFT_BLACK);
+  tft.setCursor(20, 0);
+  tft.setTextFont(2);
+  tft.setTextSize(1);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+
+  tft.println("Touch corners as indicated");
+
+  tft.setTextFont(1);
+  tft.println();
+
+  tft.calibrateTouch(calData, TFT_MAGENTA, TFT_BLACK, 15);
+
+  Serial.println(); Serial.println();
+  Serial.println("// Use this calibration code in setup():");
+  Serial.print("  uint16_t calData[5] = ");
+  Serial.print("{ ");
+
+  for (uint8_t i = 0; i < 5; i++)
+  {
+    Serial.print(calData[i]);
+    if (i < 4) Serial.print(", ");
+  }
+
+  Serial.println(" };");
+  Serial.print("  tft.setTouch(calData);");
+  Serial.println(); Serial.println();
+
+  tft.fillScreen(TFT_BLACK);
+  
+  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.println("Calibration complete!");
+  tft.println("Calibration code sent to Serial port.");
+
+  delay(4000);
+}
 
 void lv_setup_display(void) {
     init_lvgl_buffer(); // Initialize the LVGL buffer
@@ -129,17 +241,26 @@ void lv_setup_display(void) {
     log_i("LVGL initialized"); // Log the initialization of LVGL
       
     lv_tick_set_cb(tick_wrapper); // Set the tick callback function for LVGL
+
+    // Create a display using the TFT_eSPI library 
+    displayInstance = lv_tft_espi_create(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT,  draw_buf_1, draw_buf_2, DMA_BUF_BYTES);  
     
-    displayInstance = lv_tft_espi_create(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT, draw_buf_1, draw_buf_2, pixel_count * sizeof(lv_color_t)); // Create a display using the TFT_eSPI library
+    // lv_timer_create(dma_timer_cb, 1, NULL); // Create a timer to check the DMA status every 5 ms
     displayDriver = (lv_tft_espi_t*)lv_display_get_driver_data(displayInstance); // Get the display driver data
+    
     if (displayDriver == NULL) {
         log_e("Failed to get display driver data");
         throw std::runtime_error("Failed to get display driver data");
     }
-    
-    log_i("TFT setup"); // Log the completion of the display setup
-    lv_display_set_rotation(displayInstance, LV_DISPLAY_ROTATION_90); // Set the display rotation 
-    displayDriver->tft->setTouch(calData); // Calibrate the touch screen using the predefined calibration data 
+
+    g_disp = (lv_tft_espi_t*)displayDriver; // Set the global display instance for the DMA timer callback
+    // lv_display_set_rotation(displayInstance, LV_DISPLAY_ROTATION_90); // Set the display rotation 
+    // touch_calibrate(displayDriver->tft); // Calibrate the touch screen and get the calibration data
+    // ESP.restart(); 
+  
+    log_i("TFT setup"); // Log the completion of the display setup  
+    lv_display_set_rotation(displayInstance, LV_DISPLAY_ROTATION_0);
+    displayDriver->tft->setTouch(calData); // Calibrate the touch screen using the predefined calibration data  
     log_i("Touch screen calibrated"); // Log the calibration of the touch screen
 
     touchInputDevice = lv_indev_create(); // Create a new input device
@@ -199,63 +320,7 @@ void lv_screen_switch(GuiScreens screen, void* user_data) {
     delay(10); // Delay to allow the screen to clear
 
     // Switch to the specified screen
-    switch (screen) {
-        case START_GUI:
-            lv_create_start_gui();
-            break;
-        case ADD_CARD_GUI:
-            lv_create_add_card_gui(nullptr);
-            break;
-            // if(user_data) {
-            //     lv_create_add_card_gui((char*)user_data);
-            // } else {
-            //     log_e("No user data provided for add card GUI");
-            // } 
-            // break;
-        case CARD_FOUND_GUI:
-            if (user_data) {
-                lv_create_card_found_gui((Card*)user_data);
-            } else {
-                log_e("No card data provided for card found GUI");
-            } 
-            break;
-        case CARD_EDIT_GUI:
-            if (user_data) {
-                bool readonly = *(bool*)user_data;
-                lv_create_card_edit_gui(readonly);
-            } else {
-                log_e("No read-only data provided for card edit GUI");
-            }
-            break;
-        case REMOVE_CARD_GUI:
-            if (user_data) {
-                lv_create_remove_card_gui((Card*)user_data);
-            } else {
-                log_e("No card data provided for remove card GUI");
-            }
-            break;
-        case CARDS_GUI:
-            lv_create_cards_gui();
-            break;
-        case TRANSFER_GUI:
-            lv_create_transfer_gui();
-            break;
-        case TRANSFER_CONFIRM_GUI:
-            lv_create_transfer_confirm_gui();
-            break;
-        case SETTINGS_GUI:
-            lv_create_settings_gui();
-            break;
-        case ADMIN_CARD_GUI:
-            lv_create_admin_card_gui();
-            break;
-        case PLAYER_CARD_GUI:
-            lv_create_player_card_gui();
-            break;
-        default:
-            // Handle invalid screen identifier
-            break;
-    }
+    lv_create_start_gui();
 }
 
 void remove_keyboard_and_clear_focus() {
@@ -305,4 +370,25 @@ lv_obj_t* lv_obj_assert_null(lv_obj_t* obj) {
         return NULL;
     } 
     return obj;
+}
+
+
+bool display_dma_is_active()
+{
+    return g_disp->tft->dmaBusy();
+}
+
+lv_display_t* display_get()
+{
+    return displayInstance;
+}
+
+void display_dma_poll()
+{
+    if (g_disp == nullptr)
+        return;
+    
+    if (!display_dma_is_active()) { 
+        g_disp->tft->endWrite(); 
+    } 
 }

@@ -114,7 +114,7 @@ void show_sd_info() {
    
 bool is_sd_card_initialized = false; // Flag to check if the SD card is initialized
 void setupMain() {  
-    v_spi->begin(FSPI_SCK, FSPI_MISO, FSPI_MOSI); // Initialize the VSPI bus
+    v_spi->begin(VSPI_SCK, VSPI_MISO, VSPI_MOSI); // Initialize the VSPI bus
     h_spi->begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI); // Initialize the HSPI bus 
  
     pinMode(SD_STATUS_LED, OUTPUT); // Set the SD status LED pin as output 
@@ -167,9 +167,11 @@ void setupMain() {
  
  
 void setup() { 
- 
+    
+    uint32_t oldCpuFreq = getCpuFrequencyMhz(); // Get the current CPU frequency in MHz
+    setCpuFrequencyMhz(240);
     Serial.begin(MONITOR_SPEED); // Initialize serial communication for debugging
-    log_i("Starting"); // Log the start of the setup process
+    log_i("Starting, CPU Frequency was: %lu MHz", oldCpuFreq); // Log the start of the setup process
  
     setupMain(); 
 }
@@ -189,10 +191,12 @@ void toggle_led() {
         return;
     }
 
-    uint32_t phase = millis() % 500;
+    uint32_t phase = (esp_timer_get_time() / 1000) % 500;
     bool newState = (phase < 50);
 
     if (newState != lastState) {
+        // if(newState) 
+            // log_i("LED state changed to %s", newState ? "HIGH" : "LOW");
         digitalWrite(SD_STATUS_LED, newState ? HIGH : LOW);
         lastState = newState;
     }
@@ -200,30 +204,31 @@ void toggle_led() {
  
 
 void loop() { 
+    uint32_t now = esp_timer_get_time() / 1000; // Get the current time in milliseconds
     static uint32_t last_gui = 0;
     static uint32_t last_rfid = 0;
     static uint32_t last_led = 0;
+    static uint32_t last_loop = 0;
 
-    uint32_t now = millis(); 
-#if USE_DISPLAY
-    // watch_dma(); 
-    vTaskDelay(pdMS_TO_TICKS(lv_timer_handler()));
+#if USE_DISPLAY   
+    lv_timer_handler(); // Call the LittlevGL timer handler to update the display and handle events 
+    display_dma_poll(); // Poll the display DMA status to ensure smooth rendering  
 #endif
 
 #if USE_RFID 
     if (now - last_rfid >= 200) {
-        last_rfid = now;
-         
-        rfid_loop(); // Call the RFID loop function to check for new cards 
+        last_rfid = now; 
+        rfid_loop(); 
+       // rfid_loop(); // Call the RFID loop function to check for new cards 
     }
  
 #endif 
 
-    if (now - last_led >= 333) {
-        last_led = now;
-        toggle_led();
-    }
+    last_led = now;
+    toggle_led();
 
+    // log_i("Loop delta at %lu ms", now-last_loop); // Log the time when the loop function is called
+    last_loop = now; // Update the last loop time to the current time
 }
 
 

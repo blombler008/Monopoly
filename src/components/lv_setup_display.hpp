@@ -20,10 +20,7 @@
 #include <utils/config.hpp>
 #include <includes/includes.hpp>
 #include "lv_gui_containers.hpp"
-
- // 2 bytes per pixel for 16-bit color depth
-#define DRAW_BUF_SIZE ((TFT_SCREEN_WIDTH * TFT_SCREEN_HEIGHT * 2) / 6 )
-
+ 
 /**
  * @brief Initializes and sets up the LVGL display and touch input.
  * 
@@ -37,7 +34,10 @@
  * - Creates an input device for touch input and sets the read callback function.
  */
 void lv_setup_display(void);
-void lvgl_print_version(void);
-void watch_dma();
+void lvgl_print_version(void); 
+bool display_dma_is_active();
+void display_dma_poll();
+lv_display_t* display_get();
+
 
 #endif

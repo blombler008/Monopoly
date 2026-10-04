@@ -104,17 +104,7 @@ void lv_create_admin_card_gui(void);
 void lv_create_player_card_gui(void);
 
 enum GuiScreens {
-    START_GUI,
-    ADD_CARD_GUI,
-    CARD_FOUND_GUI,
-    CARD_EDIT_GUI,
-    REMOVE_CARD_GUI,
-    CARDS_GUI,
-    TRANSFER_GUI,
-    TRANSFER_CONFIRM_GUI,
-    SETTINGS_GUI,
-    ADMIN_CARD_GUI,
-    PLAYER_CARD_GUI
+    START_GUI, 
 };
 
 /**

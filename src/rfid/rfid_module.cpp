@@ -1,5 +1,15 @@
 #include "rfid_module.hpp"
 
+
+/**
+ * @brief Flag to enable or disable RFID scanning.
+ * This volatile boolean variable is used to control whether the RFID scanning loop should be active.
+ * It is set to true when scanning is enabled and false when scanning is disabled, allowing for dynamic control of the RFID scanning process.
+ * 
+ */
+volatile bool rfid_scan_enabled = false;
+
+
 using Uid = MFRC522::Uid;
 /**
  * @brief Initializes an MFRC522 SPI device.
@@ -87,17 +97,22 @@ const RFIDTag rfid_tags[] = {
     {"0x6e-0xa8-0xe5-0x0", "HypaHypa.mp3"},
 };
 
-void rfid_loop() {
+bool rfid_loop() {
+
+    if(!rfid_scan_enabled)
+        return false;
+
+
     // log_i("RFID Reader (Pin %d): Waiting for card...", RFID_CS); // Log that the reader is waiting for a card
     // Check if a new card is present 
     if (!mfrc522->PICC_IsNewCardPresent()) {
-        return; // If no new card is present, exit the loop
+        return false; // If no new card is present, exit the loop
     }; // If no new card is present, exit the loop
     
     // Attempt to read the card's serial number
     if (!mfrc522->PICC_ReadCardSerial()) {
         log_i("RFID Reader (Pin %d): Bad read (was card removed too quickly?)", RFID_CS);   
-        return;
+        return false;
     }
 
     // Check if the UID size is valid
@@ -105,7 +120,7 @@ void rfid_loop() {
         log_i("RFID Reader (Pin %d): Bad card (size = 0)", RFID_CS);   
         
         xSemaphoreGive(spi_semaphore);
-        return;
+        return false;
     } 
 
     Uid uid = {0}; // Create a new UID object
@@ -116,10 +131,11 @@ void rfid_loop() {
     
     log_i("RFID Reader (Pin %d): Good scan: %s", RFID_CS, tag); // Log the UID data
 
+    rfid_scan_enabled = false;   // Automatisch deaktivieren
 
     // Check if the tag matches any predefined tags
     if (compare_tag(tag, rfid_tags, sizeof(rfid_tags) / sizeof(RFIDTag))) { 
-        return;
+        return true;
     } else {
         log_i("RFID Reader (Pin %d): No matching tag found: \"%s\"", RFID_CS, tag); // Log if no matching tag is found
     }
@@ -131,4 +147,11 @@ void rfid_loop() {
     // Disengage the card
     mfrc522->PICC_HaltA();  
     mfrc522->PCD_StopCrypto1();  
+     
+
+    return true; // Return true if a card was successfully read and processed
+}
+
+void enable_rfid_scan() {
+    rfid_scan_enabled = true;
 }
