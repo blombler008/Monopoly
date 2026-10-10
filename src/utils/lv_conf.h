@@ -21,10 +21,10 @@
  *====================*/
 
 /*Color depth: 8 (A8), 16 (RGB565), 24 (RGB888), 32 (XRGB8888)*/
-#define LV_COLOR_DEPTH 16
+#define LV_COLOR_FORMAT_DEFAULT LV_COLOR_FORMAT_RGB565
 
 /*Swap the 2 bytes of RGB565 color. Useful if the display has an 8-bit interface (e.g. SPI)*/
-#define LV_COLOR_16_SWAP 1
+#define LV_COLOR_FORMAT_RGB565_SWAPPED 1
 
 /*Enable features to draw on transparent background.
  *It's required if opa, and transform_* style properties are used.
@@ -271,7 +271,7 @@
 #define LV_USE_ASSERT_OBJ           0   /*Check the object's type and existence (e.g. not deleted). (Slow)*/
 
 /*Add a custom handler when assert happens e.g. to restart the MCU*/
-#define LV_ASSERT_HANDLER_INCLUDE <stdint.h>
+// #define LV_ASSERT_HANDLER_INCLUDE <stdint.h>
 #define LV_ASSERT_HANDLER while(1);   /*Halt by default*/
 
 /*-------------
@@ -860,10 +860,7 @@
     /*Requires: lv_list*/
     #define LV_FILE_EXPLORER_QUICK_ACCESS        1
 #endif
-
-/** Enable loading XML UIs runtime */
-#define LV_USE_XML    1
-
+ 
 /** 1: Enable text translation support */
 #define LV_USE_TRANSLATION 1
 

@@ -50,8 +50,9 @@ void lv_create_start_gui_async(void*) {
     // default = en
     // lv_result_t project_result = lv_xml_register_component_from_file("S:/assets/project.xml");
     // lv_xml_register_component_from_file("S:/assets/globals.xml");
-    lv_result_t translation_result = lv_xml_register_translation_from_file("S:/assets/languages.xml");
-    log_i("Translation registration result: %d", translation_result);
+    // lv_result_t translation_result = lv_xml_register_translation_from_file("S:/assets/translation.xml"); 
+
+    // log_i("Translation registration result: %d", translation_result);
 
 
     lv_translation_set_language("en"); 
