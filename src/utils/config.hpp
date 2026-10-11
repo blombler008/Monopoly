@@ -35,7 +35,7 @@
 #define TFT_CS      9 // Chip select control pin
 #define TFT_DC      11 // Data Command control pin 
 #define TFT_RST     -1 //21  //47 
-#define TFT_CALLIBRATION_DATA { 250, 3351, 330, 3414, 1 }; // Calibration data for the touch screen change this if needed
+#define TFT_CALLIBRATION_DATA { 248, 3320, 306, 3480, 1 }; // Calibration data for the touch screen change this if needed
 #define TOUCH_CS    10
 
 // RFID Settings  

@@ -131,7 +131,7 @@ void setupMain() {
  
 #if USE_DISPLAY
  
-    lv_setup_display(); // Initialize the display using LittlevGL  
+    lv_setup_display(); // Initialize the display using LittlevGL   
     lv_create_start_gui(); // Create the initial graphical user interface
     lv_start_loop(); // Start the LittlevGL loop
 #endif

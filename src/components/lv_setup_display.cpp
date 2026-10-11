@@ -88,8 +88,6 @@ void init_lvgl_buffer() {
     log_i("LVGL buffer allocated in DMA memory");
 }
 
-
-
 void lv_log(lv_log_level_t level, const char * buf) {
     LV_UNUSED(level);
     log_i("LVGL: %s", buf); 
@@ -158,13 +156,13 @@ void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data)
 
 // void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data) { 
 //     uint16_t touchpad_x, touchpad_y; // Variables to store the touchpad coordinates
- 
+//
 //     bool touchpad_pressed = displayDriver->tft->getTouch(&touchpad_x, &touchpad_y, 300); // Get the touchpad coordinates 
 //     // log_i("Touch: x=%d, y=%d, pressed=%d", touchpad_x, touchpad_y, touchpad_pressed); // Log the touch coordinates and state to the serial output
 //     // uint16_t raw_touchpad_x, raw_touchpad_y; // Variables to store the touchpad coordinates
 //     // bool raw_touchpad_pressed = displayDriver->tft->getTouchRaw(&raw_touchpad_x, &raw_touchpad_y); // Get the raw touchpad coordinates
 //     // log_i("Raw Touch: x=%d, y=%d, pressed=%d", raw_touchpad_x, raw_touchpad_y, raw_touchpad_pressed); // Log the raw touch coordinates and state to the serial output
-    
+// 
 //     if (touchpad_pressed) { // Check if the touchpad is pressed
 //         data->point.y = touchpad_x; // swap x and y
 //         data->point.x = 240 - touchpad_y;  // swap x and y and invert x
@@ -172,9 +170,9 @@ void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data)
 //     } else {
 //         data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
 //     }
-
+//
 //     // log_i("Touch: x=%d, y=%d, state=%d", data->point.x, data->point.y, data->state); // Log the touch coordinates and state to the serial output
-    
+//  
 // }
 
 static uint32_t tick_wrapper(void) {
@@ -277,6 +275,8 @@ void lv_setup_display(void) {
     lv_indev_set_group(keypadInputDevice, keypadGroup); // Create a new group for the keypad input device
     lv_group_set_default(keypadGroup); // Set the default group for the keypad input device
     log_i("Keypad group created"); // Log the creation of the keypad group
+
+    
 }
 
 lv_group_t* getKeypadGroup() {
@@ -317,10 +317,10 @@ void lv_screen_switch(GuiScreens screen, void* user_data) {
     // Clear the current screen
     lv_obj_clean(lv_screen_active());
     
-    delay(10); // Delay to allow the screen to clear
+    // delay(10); // Delay to allow the screen to clear
 
     // Switch to the specified screen
-    lv_create_start_gui();
+    // lv_create_start_gui();
 }
 
 void remove_keyboard_and_clear_focus() {
@@ -355,8 +355,6 @@ void show_keyboard_on_click(lv_event_t * event, lv_obj_t* textInputX) {
             break;
     }
 }
-
-
 
 lv_obj_t* lv_obj_assert_null(lv_obj_t* obj) {
     if (obj == NULL) {
