@@ -1,0 +1,11 @@
+--- "patches/original\\TFT_eSPI\\TFT_eSPI_ESP32_S3.h"	2023-12-22 02:07:33.000000000 +0100
++++ "patches/modified\\TFT_eSPI\\TFT_eSPI_ESP32_S3.h"	2026-02-22 12:47:17.956204300 +0100
+@@ -14,6 +14,8 @@
+ #include "soc/spi_reg.h"
+ #include "driver/spi_master.h"
+ #include "hal/gpio_ll.h"
++#include "User_Setup.h"
++#include "soc/soc.h"
+ 
+ #if !defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32)
+   #define CONFIG_IDF_TARGET_ESP32

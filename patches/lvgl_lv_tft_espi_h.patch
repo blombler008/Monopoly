@@ -1,0 +1,11 @@
+--- "patches/original\\lvgl\\lv_tft_espi.h"	2026-09-16 16:42:52.330315100 +0200
++++ "patches/modified\\lvgl\\lv_tft_espi.h"	2026-10-10 22:20:24.126947400 +0200
+@@ -28,7 +28,7 @@
+ /**********************
+  * GLOBAL PROTOTYPES
+  **********************/
+-lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf, uint32_t buf_size_bytes);
++lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf1, void * buf2, uint32_t buf_size_bytes);
+ 
+ /**********************
+  *      MACROS

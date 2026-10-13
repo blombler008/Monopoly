@@ -1,0 +1,32 @@
+[
+    {
+        "lib": "lvgl",
+        "file": "lv_conf.h",
+        "patch": "lvgl_lv_conf_h.patch"
+    },
+    {
+        "lib": "lvgl",
+        "file": "lv_tft_espi.cpp",
+        "patch": "lvgl_lv_tft_espi_cpp.patch"
+    },
+    {
+        "lib": "lvgl",
+        "file": "lv_tft_espi.h",
+        "patch": "lvgl_lv_tft_espi_h.patch"
+    },
+    {
+        "lib": "TFT_eSPI",
+        "file": "TFT_eSPI_ESP32_S3.c",
+        "patch": "TFT_eSPI_TFT_eSPI_ESP32_S3_c.patch"
+    },
+    {
+        "lib": "TFT_eSPI",
+        "file": "TFT_eSPI_ESP32_S3.h",
+        "patch": "TFT_eSPI_TFT_eSPI_ESP32_S3_h.patch"
+    },
+    {
+        "lib": "TFT_eSPI",
+        "file": "User_Setup.h",
+        "patch": "TFT_eSPI_User_Setup_h.patch"
+    }
+]

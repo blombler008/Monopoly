@@ -1,0 +1,111 @@
+--- "patches/original\\TFT_eSPI\\TFT_eSPI_ESP32_S3.c"	2023-12-22 02:07:33.000000000 +0100
++++ "patches/modified\\TFT_eSPI\\TFT_eSPI_ESP32_S3.c"	2026-10-11 19:37:26.260141200 +0200
+@@ -7,7 +7,7 @@
+ ////////////////////////////////////////////////////////////////////////////////////////
+ // Global variables
+ ////////////////////////////////////////////////////////////////////////////////////////
+-
++#include "TFT_eSPI_ESP32_S3.h"
+ // Select the SPI port to use, ESP32 has 2 options
+ #if !defined (TFT_PARALLEL_8_BIT)
+   #ifdef CONFIG_IDF_TARGET_ESP32
+@@ -29,7 +29,7 @@
+   #endif
+ #endif
+ 
+-#ifdef ESP32_DMA
++#if 1
+   // DMA SPA handle
+   spi_device_handle_t dmaHAL;
+   #ifdef CONFIG_IDF_TARGET_ESP32
+@@ -621,6 +621,7 @@
+     ret = spi_device_get_trans_result(dmaHAL, &rtrans, portMAX_DELAY);
+     assert(ret == ESP_OK);
+   }
++  // WRITE_PERI_REG( SPI_DMA_CONF_REG(SPI_DMA_CH_AUTO) , 0x00 );
+   spiBusyCheck = 0;
+ }
+ 
+@@ -646,6 +647,8 @@
+   // of 32768 pixels maximum. (equivalent to an area of ~320 x 100 pixels)
+   bool temp = _swapBytes;
+   _swapBytes = false;
++  log_i("len=%d", len);
++  log_i("buff=%p", image);
+   while(len>0x4000) { // Transfer 16-bit pixels in blocks if len*2 over 65536 bytes
+     pushPixels(image, 0x400);
+     len -= 0x400; image+= 0x400; // Arbitrarily send 1K pixel blocks (2Kbytes)
+@@ -655,7 +658,7 @@
+   esp_err_t ret;
+   static spi_transaction_t trans;
+ 
+-  memset(&trans, 0, sizeof(spi_transaction_t));
++  memset(&trans, 0, sizeof(spi_transaction_t)); //Zero out the transaction
+ 
+   trans.user = (void *)1;
+   trans.tx_buffer = image;  //finally send the line data
+@@ -676,6 +679,7 @@
+ // Fixed const data assumed, will NOT clip or swap bytes
+ void TFT_eSPI::pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t const* image)
+ {
++  // log_d("pushImageDMA: x=%d y=%d w=%d h=%d", x, y, w, h); 
+   if ((w == 0) || (h == 0) || (!DMA_Enabled)) return;
+ 
+   uint16_t *buffer = (uint16_t*)image;
+@@ -690,6 +694,7 @@
+   // of 32768 pixels maximum. (equivalent to an area of ~320 x 100 pixels)
+   bool temp = _swapBytes;
+   _swapBytes = false;
++  // log_d("pushImageDMA: len=%d", len);
+   while(len>0x4000) { // Transfer 16-bit pixels in blocks if len*2 over 65536 bytes
+     pushPixels(buffer, 0x400);
+     len -= 0x400; buffer+= 0x400; // Arbitrarily send 1K pixel blocks (2Kbytes)
+@@ -719,7 +724,9 @@
+ ***************************************************************************************/
+ // This will clip and also swap bytes if setSwapBytes(true) was called by sketch
+ void TFT_eSPI::pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t* image, uint16_t* buffer)
+-{
++{   
++  
++  // log_d("pushImageDMA: x=%d y=%d w=%d h=%d", x, y, w, h);
+   if ((x >= _vpW) || (y >= _vpH) || (!DMA_Enabled)) return;
+ 
+   int32_t dx = 0;
+@@ -732,9 +739,9 @@
+ 
+   if ((x + dw) > _vpW ) dw = _vpW - x;
+   if ((y + dh) > _vpH ) dh = _vpH - y;
+-
++  // log_d("pushImageDMA: dx=%d dy=%d dw=%d dh=%d", dx, dy, dw, dh);
+   if (dw < 1 || dh < 1) return;
+-
++  
+   uint32_t len = dw*dh;
+ 
+   if (buffer == nullptr) {
+@@ -778,6 +785,7 @@
+   // of 32768 pixels maximum. (equivalent to an area of ~320 x 100 pixels)
+   bool temp = _swapBytes;
+   _swapBytes = false;
++  // log_d("pushImageDMA: len=%d", len);
+   while(len>0x4000) { // Transfer 16-bit pixels in blocks if len*2 over 65536 bytes
+     pushPixels(buffer, 0x400);
+     len -= 0x400; buffer+= 0x400; // Arbitrarily send 1K pixel blocks (2Kbytes)
+@@ -825,7 +833,8 @@
+ 
+ void IRAM_ATTR dma_end_callback(spi_transaction_t *spi_tx)
+ {
+-  WRITE_PERI_REG(SPI_DMA_CONF_REG(spi_host), 0);
++ WRITE_PERI_REG( SPI_DMA_CONF_REG(SPI_DMA_CH_AUTO) , 0b11 );  //workaround
++  // WRITE_PERI_REG(SPI_DMA_CONF_REG(spi_host), 0);
+ }
+ 
+ /***************************************************************************************
+@@ -836,6 +845,7 @@
+ {
+   if (DMA_Enabled) return false;
+ 
++  log_i("DMA initialisation");
+   esp_err_t ret;
+   spi_bus_config_t buscfg = {
+     .mosi_io_num = TFT_MOSI,
