@@ -1,5 +1,6 @@
 #include <components/lv_gui_containers.hpp> 
 #include <Monopoly.h>
+#include <rfid/rfid_module.hpp>
 lv_obj_t* textInput_start_gui; 
 
 static void text_input_event_cb(lv_event_t * event) {
@@ -44,26 +45,18 @@ void lv_start_loop(void) {
 // GUI Creation
 void lv_create_start_gui_async(void*) { 
     // Create a text label aligned center on top ("Monopoly Banking")
-    // Link Arduino SD to LVGL
+    // Link assets from Arduino SD to LVGL
     Monopoly_init("S:/assets/");
     // Supported Languages: English ( "en" ), Deutsch ( "de" )  
-    // default = en
-    // lv_result_t project_result = lv_xml_register_component_from_file("S:/assets/project.xml");
-    // lv_xml_register_component_from_file("S:/assets/globals.xml");
-    // lv_result_t translation_result = lv_xml_register_translation_from_file("S:/assets/translation.xml"); 
-
-    // log_i("Translation registration result: %d", translation_result);
+    // default = en  
+    lv_translation_set_language("de");  
  
+    lv_screen_load(welcome_create());
+}
 
-    welcome = welcome_create(); 
-    settings = settings_create();
-    game_start = game_start_create();
-    
-    lv_screen_load(welcome);
+void add_card_cb(lv_event_t * event) {
+    enable_rfid_scan(); // Enable RFID scanning when the "Add Card" button is clicked in settings GUI
 
-    lv_translation_set_language("de"); 
-
- 
 }
 
 void lv_create_start_gui(void) {

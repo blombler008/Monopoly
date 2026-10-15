@@ -88,11 +88,47 @@ void init_lvgl_buffer() {
     log_i("LVGL buffer allocated in DMA memory");
 }
 
+#define LOG_BUFFER_SIZE 8192
+static char log_buffer[LOG_BUFFER_SIZE];
+static volatile uint16_t log_write_pos = 0;
+
 void lv_log(lv_log_level_t level, const char * buf) {
-    LV_UNUSED(level);
-    log_i("LVGL: %s", buf); 
+    // LV_UNUSED(level);
+     uint16_t len = strlen(buf);
+
+    if(len + log_write_pos >= LOG_BUFFER_SIZE)
+        log_write_pos = 0; // wrap
+
+    memcpy(&log_buffer[log_write_pos], buf, len);
+    log_write_pos += len;
 }
- 
+#define CHUNK_SIZE 1024
+#include "driver/uart.h"
+
+void log_task(void *param){
+     uint16_t read_pos = 0;
+
+    while(true)
+    {
+        if(read_pos != log_write_pos)
+        {
+            char temp[CHUNK_SIZE];
+            int chunk = 0;
+
+            while(read_pos != log_write_pos && chunk < CHUNK_SIZE)
+            {
+                temp[chunk++] = log_buffer[read_pos++];
+                if(read_pos >= LOG_BUFFER_SIZE)
+                    read_pos = 0;
+            }
+
+            uart_write_bytes(UART_NUM_0, temp, chunk);
+        }
+
+        vTaskDelay(1); // wichtig für Idle-Task
+    }
+}
+
 void keypad_read_cb(lv_indev_t * indev, lv_indev_data_t* data) {
     static uint8_t last_key = 0; // Variable to store the last key pressed
     I2CKeyPad keypad = getKeypad(); // Get the keypad object
@@ -231,11 +267,15 @@ void touch_calibrate(TFT_eSPI * tftref)
   delay(4000);
 }
 
+
 void lv_setup_display(void) {
     init_lvgl_buffer(); // Initialize the LVGL buffer
     lvgl_print_version(); // Log the version of LVGL for compatibility
-    uint16_t calData[5] = TFT_CALLIBRATION_DATA; 
+    uint16_t calData[5] = TFT_CALLIBRATION_DATA;
+    lv_log_register_print_cb(lv_log); // Register the log callback function for LVGL
+    xTaskCreate(log_task, "log_task", 16384, NULL, 1, NULL);
     lv_init(); // Initialize the LVGL library
+    lv_log_register_print_cb(lv_log); // Register the log callback function for LVGL
     log_i("LVGL initialized"); // Log the initialization of LVGL
       
     lv_tick_set_cb(tick_wrapper); // Set the tick callback function for LVGL
@@ -276,7 +316,6 @@ void lv_setup_display(void) {
     lv_group_set_default(keypadGroup); // Set the default group for the keypad input device
     log_i("Keypad group created"); // Log the creation of the keypad group
 
-    
 }
 
 lv_group_t* getKeypadGroup() {

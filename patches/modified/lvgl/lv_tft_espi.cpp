@@ -71,10 +71,6 @@ lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf
 
 static void flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t * px_map)
 {
-    // make a buffer copy of the pixel data to avoid modifying the original buffer
-    uint8_t * buffer_copy = (uint8_t *)lv_malloc_zeroed((area->x2 - area->x1 + 1) * (area->y2 - area->y1 + 1) * sizeof(uint16_t));
-    memcpy(buffer_copy, px_map, (area->x2 - area->x1 + 1) * (area->y2 - area->y1 + 1) * sizeof(uint16_t));
-  
     lv_tft_espi_t * dsc = (lv_tft_espi_t *)lv_display_get_driver_data(disp);
 
     uint32_t w = (area->x2 - area->x1 + 1);
@@ -96,7 +92,7 @@ static void flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t * px_m
     //     }
     //     log_i("%s", line);
     // }
-    dsc->tft->pushImage(area->x1, area->y1, w, h, (uint16_t *)buffer_copy);
+    dsc->tft->pushImage(area->x1, area->y1, w, h, (uint16_t *)px_map);
 
 
     // dsc->tft->pushColors((uint16_t *)px_map, w * h, true);

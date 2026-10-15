@@ -87,14 +87,14 @@ bool compare_tag(const char* tag, const RFIDTag* rfid_tags, size_t num_tags) {
 }
 
 const RFIDTag rfid_tags[] = {
-    {"0x22-0x67-0x39-0x0", "Intro.mp3"},
-    {"0x59-0xab-0xc9-0x0", "Haut.mp3"},
-    {"0xde-0xef-0xe2-0x0", "Show.mp3"},
+    {"0x22-0x67-0x39-0x0", "Intro.mp3"}, // chip
+    {"0x59-0xab-0xc9-0x0", "Haut.mp3"}, // whitecard
+    {"0xde-0xef-0xe2-0x0", "Show.mp3"}, // card 11
 
     // Add more tags and their corresponding audio files here 
     // {"0xXX-0xXX-0xXX-0x0", "AudioFile.mp3"}, // Example of another tag
-    {"0x1e-0x62-0x2c-0x0", "Brot.mp3"},
-    {"0x6e-0xa8-0xe5-0x0", "HypaHypa.mp3"},
+    {"0x1e-0x62-0x2c-0x0", "Brot.mp3"}, // card 12
+    {"0x6e-0xa8-0xe5-0x0", "HypaHypa.mp3"}, // card 13
 };
 
 bool rfid_loop() {
@@ -102,7 +102,7 @@ bool rfid_loop() {
     if(!rfid_scan_enabled)
         return false;
 
-
+    log_i("RFID Reader (Pin %d): Waiting for card...", RFID_CS); // Log that the reader is waiting for a card
     // log_i("RFID Reader (Pin %d): Waiting for card...", RFID_CS); // Log that the reader is waiting for a card
     // Check if a new card is present 
     if (!mfrc522->PICC_IsNewCardPresent()) {
