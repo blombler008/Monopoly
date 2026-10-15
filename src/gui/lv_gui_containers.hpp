@@ -85,6 +85,9 @@ void lv_create_title_underline(lv_obj_t* parent, const char* title);
 /////////////////////////////////////////////////////////////////////////////////////
 
 void clear_rfid_callback();
+void enable_rfid_scan();
+void set_rfid_audio_tags_enabled(bool enabled);
+bool get_rfid_audio_tags_enabled();
 
 typedef void (*RFIDCallback)(const char* uid);
 void set_rfid_callback(RFIDCallback callback);

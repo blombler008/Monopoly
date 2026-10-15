@@ -42,6 +42,18 @@
 #define RFID_CS     5  
 #define RFID_SPI_SPEED num_to_mhz(4) // SPI speed for RFID communication (4 MHz)
 
+#define RFID_USE_CALLBACK
+#define RFID_AUTO_DISABLE_AFTER_SCAN
+#define RFID_USE_AUDIO_TAGS
+
+#ifdef RFID_USE_AUDIO_TAGS
+    #ifndef RFID_AUTO_DISABLE_AFTER_SCAN
+        #define RFID_AUDIO_TAGS_DISABLE_AFTER_SCAN 1 // Disable RFID scan after audio tag is detected
+    #endif 
+    #define RFID_AUDIO_TAGS_DISABLE_CALLBACK_AFTER_SCAN 0 // Disable callback after audio tag is detected
+#endif 
+
+
 // SD Settings
 #define SD_CS       4
 #define SD_DETECT_PIN 2

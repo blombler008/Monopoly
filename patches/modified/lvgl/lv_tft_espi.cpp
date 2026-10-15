@@ -56,7 +56,7 @@ lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf
 
     dsc->tft = new TFT_eSPI(ver_res, hor_res);
     dsc->tft->init();          /* TFT init */
-    // dsc->tft->initDMA(true);          /* TFT init DMA */
+    // dsc->tft->initDMA(true);          /* TFT init DMA*/
     dsc->tft->setRotation(2); 
     lv_display_set_driver_data(disp, (void *)dsc);
     lv_display_set_flush_cb(disp, flush_cb);
@@ -64,33 +64,33 @@ lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf
     lv_display_set_buffers(disp, (void *)buf1, (void *)buf2, buf_size_bytes, LV_DISPLAY_RENDER_MODE_PARTIAL);
     return disp;
 }
-
 /**********************
  *   STATIC FUNCTIONS
  **********************/
 
 static void flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t * px_map)
-{
+{ 
+  
     lv_tft_espi_t * dsc = (lv_tft_espi_t *)lv_display_get_driver_data(disp);
 
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);
 
     dsc->tft->startWrite();
-    dsc->tft->setAddrWindow(area->x1, area->y1, w, h); 
+    dsc->tft->setAddrWindow(area->x1, area->y1, w, h);
     // dsc->tft->pushPixelsDMA((uint16_t *)px_map, w * h);
     dsc->tft->pushImage(area->x1, area->y1, w, h, (uint16_t *)px_map);
- 
-    dsc->tft->endWrite();
+  
     lv_display_flush_ready(disp);
 }
-
+ 
 IRAM_ATTR bool notify_lvgl_flush_ready(void *user_ctx)
 {
     lv_display_t *disp_driver = (lv_display_t *)user_ctx;
     lv_display_flush_ready(disp_driver);
     return false;
 }
+
 
 static void resolution_changed_event_cb(lv_event_t * e)
 {

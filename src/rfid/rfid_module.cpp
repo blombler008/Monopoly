@@ -7,7 +7,13 @@
  * It is set to true when scanning is enabled and false when scanning is disabled, allowing for dynamic control of the RFID scanning process.
  * 
  */
-volatile bool rfid_scan_enabled = false;
+volatile bool rfid_scan_enable = false;
+
+/**
+ * @brief Flag to enable or disable audio tag functionality.
+ * This volatile boolean variable is used to control whether the audio tag functionality should be active.
+ */
+volatile bool rfid_audio_tags_enable = false;
 
 
 using Uid = MFRC522::Uid;
@@ -99,7 +105,7 @@ const RFIDTag rfid_tags[] = {
 
 bool rfid_loop() {
 
-    if(!rfid_scan_enabled)
+    if(!rfid_scan_enable)
         return false;
 
     log_i("RFID Reader (Pin %d): Waiting for card...", RFID_CS); // Log that the reader is waiting for a card
@@ -131,18 +137,31 @@ bool rfid_loop() {
     
     log_i("RFID Reader (Pin %d): Good scan: %s", RFID_CS, tag); // Log the UID data
 
-    rfid_scan_enabled = false;   // Automatisch deaktivieren
+#ifdef RFID_AUTO_DISABLE_AFTER_SCAN
+        rfid_scan_enable = false;   // Automatisch deaktivieren
+#endif
 
+#ifdef RFID_USE_AUDIO_TAGS
     // Check if the tag matches any predefined tags
-    if (compare_tag(tag, rfid_tags, sizeof(rfid_tags) / sizeof(RFIDTag))) { 
+    if (rfid_audio_tags_enable && compare_tag(tag, rfid_tags, sizeof(rfid_tags) / sizeof(RFIDTag))) { 
+#if RFID_AUDIO_TAGS_DISABLE_AFTER_SCAN  
+        rfid_scan_enable = false;   // Automatisch deaktivieren
+#endif
+#if RFID_AUDIO_TAGS_DISABLE_CALLBACK_AFTER_SCAN
+        // Disengage the card
+        mfrc522->PICC_HaltA();  
+        mfrc522->PCD_StopCrypto1();  
         return true;
+#endif
     } else {
         log_i("RFID Reader (Pin %d): No matching tag found: \"%s\"", RFID_CS, tag); // Log if no matching tag is found
     }
+#endif
 
+#ifdef RFID_USE_CALLBACK
     // Call the RFID callback if set
     if (rfid_callback) rfid_callback(tag);
-    
+#endif
 
     // Disengage the card
     mfrc522->PICC_HaltA();  
@@ -153,5 +172,13 @@ bool rfid_loop() {
 }
 
 void enable_rfid_scan() {
-    rfid_scan_enabled = true;
+    rfid_scan_enable = true;
+}
+
+void set_rfid_audio_tags_enabled(bool enabled) {
+    rfid_audio_tags_enable = enabled;
+}
+
+bool get_rfid_audio_tags_enabled() {
+    return rfid_audio_tags_enable;
 }
