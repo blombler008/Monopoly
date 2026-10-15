@@ -116,7 +116,8 @@ bool is_sd_card_initialized = false; // Flag to check if the SD card is initiali
 void setupMain() {  
     v_spi->begin(VSPI_SCK, VSPI_MISO, VSPI_MOSI); // Initialize the VSPI bus
     h_spi->begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI); // Initialize the HSPI bus 
- 
+  
+
     pinMode(SD_STATUS_LED, OUTPUT); // Set the SD status LED pin as output 
     digitalWrite(SD_STATUS_LED, LOW); // Turn off the SD status LED initially
     pinMode(SD_DETECT_PIN, INPUT_PULLUP); // Set the SD card detect pin as input with pull-up resistor 

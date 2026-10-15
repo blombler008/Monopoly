@@ -666,6 +666,7 @@ void TFT_eSPI::pushPixelsDMA(uint16_t* image, uint32_t len)
   trans.flags = 0;                //SPI_TRANS_USE_TXDATA flag
 
   ret = spi_device_queue_trans(dmaHAL, &trans, portMAX_DELAY);
+ 
   assert(ret == ESP_OK);
 
   spiBusyCheck++;
@@ -835,6 +836,7 @@ void IRAM_ATTR dma_end_callback(spi_transaction_t *spi_tx)
 {
  WRITE_PERI_REG( SPI_DMA_CONF_REG(SPI_DMA_CH_AUTO) , 0b11 );  //workaround
   // WRITE_PERI_REG(SPI_DMA_CONF_REG(spi_host), 0);
+  ets_printf("DMA END CALLBACK!\n");
 }
 
 /***************************************************************************************
@@ -876,7 +878,7 @@ bool TFT_eSPI::initDMA(bool ctrl_cs)
     .clock_speed_hz = SPI_FREQUENCY,
     .input_delay_ns = 0,
     .spics_io_num = pin,
-    .flags = SPI_DEVICE_NO_DUMMY, //0,
+    .flags = SPI_DEVICE_NO_DUMMY, //0, 
     .queue_size = 1,            // Not using queues
     .pre_cb = 0, //dc_callback, //Callback to handle D/C line (not used)
     .post_cb = dma_end_callback //Callback to end transmission

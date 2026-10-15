@@ -56,8 +56,8 @@ lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf
 
     dsc->tft = new TFT_eSPI(ver_res, hor_res);
     dsc->tft->init();          /* TFT init */
-    dsc->tft->setRotation(2);
-    // dsc->tft->initDMA(true);          /* TFT init */
+    // dsc->tft->initDMA(true);          /* TFT init DMA */
+    dsc->tft->setRotation(2); 
     lv_display_set_driver_data(disp, (void *)dsc);
     lv_display_set_flush_cb(disp, flush_cb);
     lv_display_add_event_cb(disp, resolution_changed_event_cb, LV_EVENT_RESOLUTION_CHANGED, NULL);
@@ -77,28 +77,19 @@ static void flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t * px_m
     uint32_t h = (area->y2 - area->y1 + 1);
 
     dsc->tft->startWrite();
-    dsc->tft->setAddrWindow(area->x1, area->y1, w, h);
-    // log_i("area=(%d,%d)-(%d,%d), w=%d, h=%d, px_map=%p", area->x1, area->y1, area->x2, area->y2, w, h, buffer_copy);
-
-    // buffer dump : 0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F
-    // 32 bytes per line, 2 bytes per pixel (RGB565)
-    // log_i("Buffer dump:");
-    // char * buffer = (char *)buffer_copy;
-    // for (uint32_t i = 0; i < w * h * 2; i += 32) {
-    //     char line[160];
-    //     int len = snprintf(line, sizeof(line), "%04X: ", i);
-    //     for (uint32_t j = 0; j < 32 && (i + j) < w * h * 2; j++) {
-    //         len += snprintf(line + len, sizeof(line) - len, "%02X ", (unsigned char)buffer[i + j]);
-    //     }
-    //     log_i("%s", line);
-    // }
+    dsc->tft->setAddrWindow(area->x1, area->y1, w, h); 
+    // dsc->tft->pushPixelsDMA((uint16_t *)px_map, w * h);
     dsc->tft->pushImage(area->x1, area->y1, w, h, (uint16_t *)px_map);
-
-
-    // dsc->tft->pushColors((uint16_t *)px_map, w * h, true);
-    // dsc->tft->pushPixelsDMA((uint16_t*)px_map, w * h);  
+ 
     dsc->tft->endWrite();
     lv_display_flush_ready(disp);
+}
+
+IRAM_ATTR bool notify_lvgl_flush_ready(void *user_ctx)
+{
+    lv_display_t *disp_driver = (lv_display_t *)user_ctx;
+    lv_display_flush_ready(disp_driver);
+    return false;
 }
 
 static void resolution_changed_event_cb(lv_event_t * e)
