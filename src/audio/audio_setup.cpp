@@ -29,8 +29,8 @@ void audio_mute(bool mute) {
 void audio_playback_start(const char* song_path) {
     audio_playback_stop(); 
     audio_mute(false);
-    delay(10); 
-    audio.connecttoSD(song_path);
+    delay(1); 
+    audio.connecttoFS(SD, song_path);
     isPlaying = true;
 }
 
@@ -40,13 +40,40 @@ void audio_playback_stop() {
     isPlaying = false;
 }
 
+void play_beeb_single() {
+    //audio_playback_start("/audio/beep.mp3"); 
+}
+void play_beeb_fast() {
+    audio.loop();
+    //audio_playback_start("/audio/beep.mp3"); 
+}
+void play_beeb_high() {
+    // audio.setLoop(true); 
+    //audio_playback_start("/audio/beep.mp3"); 
+}
+
+void audio_info(Audio::msg_t m) {
+    Serial.printf("%s: %s\n", m.s, m.msg);
+
+    switch (m.e) {  // make a switch statement to handle different events in case i need it.
+        case Audio::evt_eof:
+            audio_playback_stop();
+            audio_mute();
+            audio.loop(); 
+            break;  
+        default:
+            break;
+    }
+}
+
 void audio_setup() {
  
+    Audio::audio_info_callback = audio_info;
     pinMode(I2S_MUTE, OUTPUT); 
     audio_mute();
 
     audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
-    audio.setVolume(5); 
+    audio.setVolume(21); 
     audio.setTone(-3,-3,-12); 
     audio_mute();
     log_i("Audio Driver initialized");
@@ -67,41 +94,4 @@ void audio_set_volume(uint8_t vol) {
 
 bool audio_is_playing() {
     return isPlaying;
-}
-
-void audio_info(const char *info){
-    log_v("info        :%s", info);
-}
-void audio_id3data(const char *info){  //id3 metadata
-    log_v("id3data     :%s", info);
 } 
-
-void audio_eof_mp3(const char *info){  //end of file
-    log_v("eof_mp3     :%s", info); 
-    audio_playback_stop();
-    audio_mute();
-    // TODO: Listed queue
-}
-void audio_showstation(const char *info){
-    log_v("station     :%s", info);
-}
-void audio_showstreamtitle(const char *info){
-    log_v("streamtitle :%s", info);
-}
-void audio_bitrate(const char *info){
-    log_v("bitrate     :%s", info);
-}
-void audio_commercial(const char *info){  //duration in sec
-    log_v("commercial  :%s", info);
-}
-void audio_icyurl(const char *info){  //homepage
-    log_v("icyurl      :%s", info);
-}
-void audio_lasthost(const char *info){  //stream URL played
-    log_v("lasthost    :%s", info);
-}
-
-
-
-
-
