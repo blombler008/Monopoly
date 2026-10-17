@@ -1,0 +1,23 @@
+--- "patches/original\\TFT_eSPI\\TFT_eSPI.cpp"	2026-10-17 00:55:52.673738800 +0200
++++ "patches/modified\\TFT_eSPI\\TFT_eSPI.cpp"	2026-10-17 02:08:08.241039600 +0200
+@@ -436,8 +436,10 @@
+ ** Function name:           TFT_eSPI
+ ** Description:             Constructor , we must use hardware SPI pins
+ ***************************************************************************************/
+-TFT_eSPI::TFT_eSPI(int16_t w, int16_t h)
++TFT_eSPI::TFT_eSPI(int16_t w, int16_t h, SPIClass* _SPI)
+ {
++  spi = (*_SPI); // Pointer to SPI class instance
++
+   _init_width  = _width  = w; // Set by specific xxxxx_Defines.h file or by users sketch
+   _init_height = _height = h; // Set by specific xxxxx_Defines.h file or by users sketch
+ 
+@@ -644,7 +646,7 @@
+ #else
+   #if !defined(TFT_PARALLEL_8_BIT) && !defined(RP2040_PIO_INTERFACE)
+     #if defined (TFT_MOSI) && !defined (TFT_SPI_OVERLAP) && !defined(ARDUINO_ARCH_RP2040) && !defined (ARDUINO_ARCH_MBED)
+-      spi.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, -1); // This will set MISO to input
++      // spi.begin(TFT_SCLK, TFT_MISO, TFT_MOSI, -1); // This will set MISO to input
+     #else
+       spi.begin(); // This will set MISO to input
+     #endif

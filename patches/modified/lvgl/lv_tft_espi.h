@@ -7,6 +7,7 @@
 #define LV_TFT_ESPI_H
 
 #ifdef __cplusplus
+#include <SPI.h>
 extern "C" {
 #endif
 
@@ -28,7 +29,9 @@ extern "C" {
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf1, void * buf2, uint32_t buf_size_bytes);
+#ifdef __cplusplus
+lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf1, void * buf2, uint32_t buf_size_bytes, SPIClass* _SPI);
+#endif
 
 /**********************
  *      MACROS

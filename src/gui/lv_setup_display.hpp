@@ -33,7 +33,7 @@
  * - Calibrates the touch screen with predefined calibration data.
  * - Creates an input device for touch input and sets the read callback function.
  */
-void lv_setup_display(void);
+void lv_setup_display(SPIClass* _SPI);
 void lvgl_print_version(void); 
 bool display_dma_is_active();
 void display_dma_poll();

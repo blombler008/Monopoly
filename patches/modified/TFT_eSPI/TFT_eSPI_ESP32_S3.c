@@ -9,26 +9,30 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 #include "TFT_eSPI_ESP32_S3.h"
 // Select the SPI port to use, ESP32 has 2 options
-#if !defined (TFT_PARALLEL_8_BIT)
-  #ifdef CONFIG_IDF_TARGET_ESP32
-    #ifdef USE_HSPI_PORT
-      SPIClass spi = SPIClass(HSPI);
-    #elif defined(USE_FSPI_PORT)
-      SPIClass spi = SPIClass(FSPI);
-    #else // use default VSPI port
-      SPIClass spi = SPIClass(VSPI);
-    #endif
-  #else
-    #ifdef USE_HSPI_PORT
-      SPIClass spi = SPIClass(HSPI);
-    #elif defined(USE_FSPI_PORT)
-      SPIClass spi = SPIClass(FSPI);
-    #else // use FSPI port
-      SPIClass& spi = SPI;
+#ifdef CUSTOM_SPI_TRANSFER 
+SPIClass spi;
+#endif
+#ifndef CUSTOM_SPI_TRANSFER 
+  #if !defined (TFT_PARALLEL_8_BIT)
+    #ifdef CONFIG_IDF_TARGET_ESP32
+      #ifdef USE_HSPI_PORT
+        SPIClass spi = SPIClass(HSPI);
+      #elif defined(USE_FSPI_PORT)
+        SPIClass spi = SPIClass(FSPI);
+      #else // use default VSPI port
+        SPIClass spi = SPIClass(VSPI);
+      #endif
+    #else
+      #ifdef USE_HSPI_PORT
+        SPIClass spi = SPIClass(HSPI);
+      #elif defined(USE_FSPI_PORT)
+        SPIClass spi = SPIClass(FSPI);
+      #else // use FSPI port
+        SPIClass& spi = SPI;
+      #endif
     #endif
   #endif
 #endif
-
 #if 1
   // DMA SPA handle
   spi_device_handle_t dmaHAL;

@@ -1,11 +1,11 @@
 --- "patches/original\\lvgl\\lv_tft_espi.cpp"	2026-09-16 16:42:52.479825900 +0200
-+++ "patches/modified\\lvgl\\lv_tft_espi.cpp"	2026-10-15 15:44:39.355059400 +0200
++++ "patches/modified\\lvgl\\lv_tft_espi.cpp"	2026-10-17 01:56:39.090658200 +0200
 @@ -40,9 +40,10 @@
   *   GLOBAL FUNCTIONS
   **********************/
  
 -lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf, uint32_t buf_size_bytes)
-+lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf1, void * buf2, uint32_t buf_size_bytes)
++lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf1, void * buf2, uint32_t buf_size_bytes, SPIClass* _SPI)
  {
 -    LV_CHECK_ARG(buf != NULL, return NULL);
 +    LV_CHECK_ARG(buf1 != NULL, return NULL);
@@ -20,7 +20,7 @@
 -    dsc->tft = new TFT_eSPI(hor_res, ver_res);
 -    dsc->tft->begin();          /* TFT init */
 -    dsc->tft->setRotation(0);
-+    dsc->tft = new TFT_eSPI(ver_res, hor_res);
++    dsc->tft = new TFT_eSPI(ver_res, hor_res, _SPI); // Create TFT_eSPI instance with swapped width and height for landscape orientation
 +    dsc->tft->init();          /* TFT init */
 +    // dsc->tft->initDMA(true);          /* TFT init DMA*/
 +    dsc->tft->setRotation(2); 

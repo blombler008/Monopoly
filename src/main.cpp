@@ -132,12 +132,15 @@ void setupMain() {
  
 #if USE_DISPLAY
  
-    lv_setup_display(); // Initialize the display using LittlevGL   
+    lv_setup_display(h_spi); // Initialize the display using LittlevGL   
+    log_i("Display setup complete"); // Log the completion of the display setup
     lv_create_start_gui(); // Create the initial graphical user interface
-    lv_start_loop(); // Start the LittlevGL loop
+    log_i("GUI created"); // Log the creation of the GUI
+    // lv_start_loop(); // Start the LittlevGL loop
 #endif
 #if USE_RFID
     rfid_setup(h_spi); // Set up the RFID readers
+    log_i("RFID setup complete"); // Log the completion of the RFID setup
 #endif
 
 #if USE_KEYPAD
@@ -145,7 +148,6 @@ void setupMain() {
     keypad_set_layout(keymap); // Set the layout for the keypad
     keypad_setup(); // Initialize the keypad with the specified layout and address
     log_i("Keypad initialized with address: 0x%02X", KEYPAD_I2C); // Log the I2C address of the keypad
- 
 #endif
 #if USE_SD
     digitalWrite(SD_STATUS_LED, HIGH); // Turn on the SD status LED to indicate SD card operations 
@@ -205,6 +207,7 @@ void toggle_led() {
  
 
 void loop() { 
+    log_d("Loop begin");
     uint32_t now = esp_timer_get_time() / 1000; // Get the current time in milliseconds
     static uint32_t last_gui = 0;
     static uint32_t last_rfid = 0;

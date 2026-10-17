@@ -1,24 +1,59 @@
 --- "patches/original\\TFT_eSPI\\TFT_eSPI_ESP32_S3.c"	2023-12-22 02:07:33.000000000 +0100
-+++ "patches/modified\\TFT_eSPI\\TFT_eSPI_ESP32_S3.c"	2026-10-15 15:43:53.147646700 +0200
-@@ -7,7 +7,7 @@
++++ "patches/modified\\TFT_eSPI\\TFT_eSPI_ESP32_S3.c"	2026-10-17 02:07:32.322850200 +0200
+@@ -7,29 +7,33 @@
  ////////////////////////////////////////////////////////////////////////////////////////
  // Global variables
  ////////////////////////////////////////////////////////////////////////////////////////
 -
 +#include "TFT_eSPI_ESP32_S3.h"
  // Select the SPI port to use, ESP32 has 2 options
- #if !defined (TFT_PARALLEL_8_BIT)
-   #ifdef CONFIG_IDF_TARGET_ESP32
-@@ -29,7 +29,7 @@
+-#if !defined (TFT_PARALLEL_8_BIT)
+-  #ifdef CONFIG_IDF_TARGET_ESP32
+-    #ifdef USE_HSPI_PORT
+-      SPIClass spi = SPIClass(HSPI);
+-    #elif defined(USE_FSPI_PORT)
+-      SPIClass spi = SPIClass(FSPI);
+-    #else // use default VSPI port
+-      SPIClass spi = SPIClass(VSPI);
+-    #endif
+-  #else
+-    #ifdef USE_HSPI_PORT
+-      SPIClass spi = SPIClass(HSPI);
+-    #elif defined(USE_FSPI_PORT)
+-      SPIClass spi = SPIClass(FSPI);
+-    #else // use FSPI port
+-      SPIClass& spi = SPI;
++#ifdef CUSTOM_SPI_TRANSFER 
++SPIClass spi;
++#endif
++#ifndef CUSTOM_SPI_TRANSFER 
++  #if !defined (TFT_PARALLEL_8_BIT)
++    #ifdef CONFIG_IDF_TARGET_ESP32
++      #ifdef USE_HSPI_PORT
++        SPIClass spi = SPIClass(HSPI);
++      #elif defined(USE_FSPI_PORT)
++        SPIClass spi = SPIClass(FSPI);
++      #else // use default VSPI port
++        SPIClass spi = SPIClass(VSPI);
++      #endif
++    #else
++      #ifdef USE_HSPI_PORT
++        SPIClass spi = SPIClass(HSPI);
++      #elif defined(USE_FSPI_PORT)
++        SPIClass spi = SPIClass(FSPI);
++      #else // use FSPI port
++        SPIClass& spi = SPI;
++      #endif
+     #endif
    #endif
  #endif
- 
+-
 -#ifdef ESP32_DMA
 +#if 1
    // DMA SPA handle
    spi_device_handle_t dmaHAL;
    #ifdef CONFIG_IDF_TARGET_ESP32
-@@ -621,6 +621,7 @@
+@@ -621,6 +625,7 @@
      ret = spi_device_get_trans_result(dmaHAL, &rtrans, portMAX_DELAY);
      assert(ret == ESP_OK);
    }
@@ -26,7 +61,7 @@
    spiBusyCheck = 0;
  }
  
-@@ -646,6 +647,8 @@
+@@ -646,6 +651,8 @@
    // of 32768 pixels maximum. (equivalent to an area of ~320 x 100 pixels)
    bool temp = _swapBytes;
    _swapBytes = false;
@@ -35,7 +70,7 @@
    while(len>0x4000) { // Transfer 16-bit pixels in blocks if len*2 over 65536 bytes
      pushPixels(image, 0x400);
      len -= 0x400; image+= 0x400; // Arbitrarily send 1K pixel blocks (2Kbytes)
-@@ -655,7 +658,7 @@
+@@ -655,7 +662,7 @@
    esp_err_t ret;
    static spi_transaction_t trans;
  
@@ -44,7 +79,7 @@
  
    trans.user = (void *)1;
    trans.tx_buffer = image;  //finally send the line data
-@@ -663,6 +666,7 @@
+@@ -663,6 +670,7 @@
    trans.flags = 0;                //SPI_TRANS_USE_TXDATA flag
  
    ret = spi_device_queue_trans(dmaHAL, &trans, portMAX_DELAY);
@@ -52,7 +87,7 @@
    assert(ret == ESP_OK);
  
    spiBusyCheck++;
-@@ -676,6 +680,7 @@
+@@ -676,6 +684,7 @@
  // Fixed const data assumed, will NOT clip or swap bytes
  void TFT_eSPI::pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t const* image)
  {
@@ -60,7 +95,7 @@
    if ((w == 0) || (h == 0) || (!DMA_Enabled)) return;
  
    uint16_t *buffer = (uint16_t*)image;
-@@ -690,6 +695,7 @@
+@@ -690,6 +699,7 @@
    // of 32768 pixels maximum. (equivalent to an area of ~320 x 100 pixels)
    bool temp = _swapBytes;
    _swapBytes = false;
@@ -68,7 +103,7 @@
    while(len>0x4000) { // Transfer 16-bit pixels in blocks if len*2 over 65536 bytes
      pushPixels(buffer, 0x400);
      len -= 0x400; buffer+= 0x400; // Arbitrarily send 1K pixel blocks (2Kbytes)
-@@ -719,7 +725,9 @@
+@@ -719,7 +729,9 @@
  ***************************************************************************************/
  // This will clip and also swap bytes if setSwapBytes(true) was called by sketch
  void TFT_eSPI::pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t* image, uint16_t* buffer)
@@ -79,7 +114,7 @@
    if ((x >= _vpW) || (y >= _vpH) || (!DMA_Enabled)) return;
  
    int32_t dx = 0;
-@@ -732,9 +740,9 @@
+@@ -732,9 +744,9 @@
  
    if ((x + dw) > _vpW ) dw = _vpW - x;
    if ((y + dh) > _vpH ) dh = _vpH - y;
@@ -91,7 +126,7 @@
    uint32_t len = dw*dh;
  
    if (buffer == nullptr) {
-@@ -778,6 +786,7 @@
+@@ -778,6 +790,7 @@
    // of 32768 pixels maximum. (equivalent to an area of ~320 x 100 pixels)
    bool temp = _swapBytes;
    _swapBytes = false;
@@ -99,7 +134,7 @@
    while(len>0x4000) { // Transfer 16-bit pixels in blocks if len*2 over 65536 bytes
      pushPixels(buffer, 0x400);
      len -= 0x400; buffer+= 0x400; // Arbitrarily send 1K pixel blocks (2Kbytes)
-@@ -825,7 +834,9 @@
+@@ -825,7 +838,9 @@
  
  void IRAM_ATTR dma_end_callback(spi_transaction_t *spi_tx)
  {
@@ -110,7 +145,7 @@
  }
  
  /***************************************************************************************
-@@ -836,6 +847,7 @@
+@@ -836,6 +851,7 @@
  {
    if (DMA_Enabled) return false;
  
@@ -118,7 +153,7 @@
    esp_err_t ret;
    spi_bus_config_t buscfg = {
      .mosi_io_num = TFT_MOSI,
-@@ -866,7 +878,7 @@
+@@ -866,7 +882,7 @@
      .clock_speed_hz = SPI_FREQUENCY,
      .input_delay_ns = 0,
      .spics_io_num = pin,

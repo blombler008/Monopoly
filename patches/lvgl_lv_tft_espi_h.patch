@@ -1,11 +1,21 @@
 --- "patches/original\\lvgl\\lv_tft_espi.h"	2026-09-16 16:42:52.330315100 +0200
-+++ "patches/modified\\lvgl\\lv_tft_espi.h"	2026-10-15 15:45:15.576092200 +0200
-@@ -28,7 +28,7 @@
++++ "patches/modified\\lvgl\\lv_tft_espi.h"	2026-10-17 02:07:21.284609300 +0200
+@@ -7,6 +7,7 @@
+ #define LV_TFT_ESPI_H
+ 
+ #ifdef __cplusplus
++#include <SPI.h>
+ extern "C" {
+ #endif
+ 
+@@ -28,7 +29,9 @@
  /**********************
   * GLOBAL PROTOTYPES
   **********************/
 -lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf, uint32_t buf_size_bytes);
-+lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf1, void * buf2, uint32_t buf_size_bytes);
++#ifdef __cplusplus
++lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf1, void * buf2, uint32_t buf_size_bytes, SPIClass* _SPI);
++#endif
  
  /**********************
   *      MACROS

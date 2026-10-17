@@ -1,0 +1,11 @@
+--- "patches/original\\TFT_eSPI\\TFT_eSPI.h"	2026-10-17 01:54:25.298288100 +0200
++++ "patches/modified\\TFT_eSPI\\TFT_eSPI.h"	2026-10-17 01:53:04.004720500 +0200
+@@ -429,7 +429,7 @@
+  //--------------------------------------- public ------------------------------------//
+  public:
+ 
+-  TFT_eSPI(int16_t _W = TFT_WIDTH, int16_t _H = TFT_HEIGHT);
++  TFT_eSPI(int16_t _W = TFT_WIDTH, int16_t _H = TFT_HEIGHT, SPIClass* _SPI = &SPI);
+ 
+   // init() and begin() are equivalent, begin() included for backwards compatibility
+   // Sketch defined tab colour option is for ST7735 displays only

@@ -16,6 +16,16 @@
     },
     {
         "lib": "TFT_eSPI",
+        "file": "TFT_eSPI.cpp",
+        "patch": "TFT_eSPI_TFT_eSPI_cpp.patch"
+    },
+    {
+        "lib": "TFT_eSPI",
+        "file": "TFT_eSPI.h",
+        "patch": "TFT_eSPI_TFT_eSPI_h.patch"
+    },
+    {
+        "lib": "TFT_eSPI",
         "file": "TFT_eSPI_ESP32_S3.c",
         "patch": "TFT_eSPI_TFT_eSPI_ESP32_S3_c.patch"
     },

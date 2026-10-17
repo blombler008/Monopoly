@@ -137,13 +137,6 @@ void keypad_read_cb(lv_indev_t * indev, lv_indev_data_t* data) {
 
     uint8_t key = keypad.getChar(); // Get the key pressed on the keypad 
 
-    // if the same key is pressed as the last key, we want to ignore the press if it is withing a 2 sec window. 
-    //otherwise when the key is released, it will be considered a new key press
-    // if (key == last_key && millis() - keypad.getLastTimeRead() < 2000) {
-    //     data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
-    //     return; // Ignore the key press
-    // }
-
     data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
     data->key = key; // Set the key to the key pressed
  
@@ -156,13 +149,16 @@ void keypad_read_cb(lv_indev_t * indev, lv_indev_data_t* data) {
 
 void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data)
 {
+    // log_i("Touch read callback called"); // Log when the touch read callback is called
     static uint16_t x, y;
  
     if( display_dma_is_active() ) {
+        // log_i("DMA is active, skipping touch read"); // Log when DMA is active and touch read is skipped
         data->state = LV_INDEV_STATE_RELEASED;
         return;
     }
-
+ 
+    // log_i(displayDriver->tft->getTouch(&x, &y, 350) ? "Touch detected" : "No touch detected"); // Log whether a touch is detected or not
     if(displayDriver->tft->getTouch(&x, &y, 350)) { 
         // Invert the touch coordinates to match the display orientation and swap x and y
         data->point.x = x;
@@ -268,7 +264,7 @@ void touch_calibrate(TFT_eSPI * tftref)
 }
 
 
-void lv_setup_display(void) {
+void lv_setup_display(SPIClass* _SPI) {
     init_lvgl_buffer(); // Initialize the LVGL buffer
     lvgl_print_version(); // Log the version of LVGL for compatibility
     uint16_t calData[5] = TFT_CALLIBRATION_DATA;
@@ -281,7 +277,7 @@ void lv_setup_display(void) {
     lv_tick_set_cb(tick_wrapper); // Set the tick callback function for LVGL
 
     // Create a display using the TFT_eSPI library 
-    displayInstance = lv_tft_espi_create(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT,  draw_buf_1, draw_buf_2, DMA_BUF_BYTES);  
+    displayInstance = lv_tft_espi_create(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT,  draw_buf_1, draw_buf_2, DMA_BUF_BYTES, _SPI); 
     
     // lv_timer_create(dma_timer_cb, 1, NULL); // Create a timer to check the DMA status every 5 ms
     displayDriver = (lv_tft_espi_t*)lv_display_get_driver_data(displayInstance); // Get the display driver data

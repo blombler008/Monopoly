@@ -40,7 +40,7 @@ static void resolution_changed_event_cb(lv_event_t * e);
  *   GLOBAL FUNCTIONS
  **********************/
 
-lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf1, void * buf2, uint32_t buf_size_bytes)
+lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf1, void * buf2, uint32_t buf_size_bytes, SPIClass* _SPI)
 {
     LV_CHECK_ARG(buf1 != NULL, return NULL);
     LV_CHECK_ARG(buf2 != NULL, return NULL);
@@ -54,7 +54,7 @@ lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf
         return NULL;
     }
 
-    dsc->tft = new TFT_eSPI(ver_res, hor_res);
+    dsc->tft = new TFT_eSPI(ver_res, hor_res, _SPI); // Create TFT_eSPI instance with swapped width and height for landscape orientation
     dsc->tft->init();          /* TFT init */
     // dsc->tft->initDMA(true);          /* TFT init DMA*/
     dsc->tft->setRotation(2); 
