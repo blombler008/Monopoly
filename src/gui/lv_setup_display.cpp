@@ -343,21 +343,7 @@ void time_gui_creation_async(void (*gui_function)(void*), void* param) {
     unsigned long end_time = portGET_RUN_TIME_COUNTER_VALUE();
     log_i("GUI creation time: %lu ns", (end_time - start_time)*4);
 }
-
-void lv_screen_switch(GuiScreens screen, void* user_data) {
-    delete_timer(); // Delete the timer
-
-    clear_rfid_callback(); // Clear the RFID callback
-
-    // Clear the current screen
-    lv_obj_clean(lv_screen_active());
-    
-    // delay(10); // Delay to allow the screen to clear
-
-    // Switch to the specified screen
-    // lv_create_start_gui();
-}
-
+ 
 void remove_keyboard_and_clear_focus() {
     if(keyboard != nullptr) { 
         lv_obj_delete(keyboard);

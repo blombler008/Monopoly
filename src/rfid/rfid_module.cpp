@@ -16,7 +16,6 @@ volatile bool rfid_scan_enable = false;
 volatile bool rfid_audio_tags_enable = false;
 
 
-using Uid = MFRC522::Uid;
 /**
  * @brief Initializes an MFRC522 SPI device.
  * 
@@ -27,18 +26,45 @@ using Uid = MFRC522::Uid;
  * @param vls Voltage level shifter or power control parameter. 
  */
 MFRC522_SPI* spiDevice1; 
+ 
+/**
+ * @brief Structure representing an RFID tag and its associated audio file.
+ */
+typedef struct {
+    const char* tag; // The tag string
+    const char* audio_file; // The audio file to play when the tag is detected
+} RFIDTag;
 
 /**
- * @brief Array of chip select (CS) pins for RFID modules.
- * 
- * This array holds the pin numbers used to select the RFID modules
- * connected to the microcontroller. The pins are defined by the 
- * RFID_CS_PINS macro.
+ * @brief Array of RFID tags and their associated audio files.
  */
 
+static RFIDTag* rfid_tags = nullptr;
+
+/**
+ * @brief Number of RFID tags in the array.
+ */
+static size_t rfid_tags_count = 0;
+
+/**
+ * @brief Type alias for the UID structure used by the MFRC522 library.
+ */
+using Uid = MFRC522::Uid;
+
+/**
+ * @brief Pointer to the MFRC522 RFID reader object.
+ * 
+ * This pointer is used to interact with the MFRC522 RFID reader, allowing for operations such as scanning for tags, reading tag data, and controlling the reader's behavior.
+ */
 MFRC522* mfrc522; 
 
+/**
+ * @brief Callback function for handling RFID tag detections.
+ * 
+ * This function is called when an RFID tag is detected by the reader.
+ */
 RFIDCallback rfid_callback = nullptr;
+
 
 void set_rfid_callback(RFIDCallback callback) {
     rfid_callback = callback;
@@ -64,10 +90,9 @@ void rfid_setup(SPIClass* v_spi) {
         mfrc522->PCD_DumpVersionToSerial(); // Dump the version of the MFRC522 reader to the serial console
         delay(10); // Wait for the reader to initialize   
         version = mfrc522->PCD_ReadRegister(mfrc522->VersionReg); // Store the version in a byte variable
-    } 
+    }  
     log_i("RFID Reader (Pin %d): Found", RFID_CS); // Log that the reader was found
 }
-
 
 // make an array like objects to compare the tag with 
 // predefined tags for intro, haut, and show
@@ -75,33 +100,18 @@ void rfid_setup(SPIClass* v_spi) {
 // These tags are used to trigger specific audio playback 
 // The tags are defined as strings for easy comparison
     
-typedef struct {
-    const char* tag; // The tag string
-    const char* audio_file; // The audio file to play when the tag is detected
-} RFIDTag;
 
-bool compare_tag(const char* tag, const RFIDTag* rfid_tags, size_t num_tags) {
-    for (size_t i = 0; i < num_tags; i++) {
+bool compare_tag(const char* tag) {
+    for (size_t i = 0; i < rfid_tags_count; i++) {
         if (strcmp(tag, rfid_tags[i].tag) == 0) {
-            
-            log_i("RFID Reader (Pin %d): %s tag detected", RFID_CS,  rfid_tags[i].audio_file); // Log the detected tag
-            audio_playback_start(rfid_tags[i].audio_file); // Start playing the audio file associated with the tag
-            return true; // Return true if a match is found
+            log_i("RFID: tag %s detected -> %s", tag, rfid_tags[i].audio_file);
+            audio_playback_start(rfid_tags[i].audio_file);
+            return true;
         }
     }
-    return false; // Return false if no match is found
+    return false;
 }
-
-const RFIDTag rfid_tags[] = {
-    {"0x22-0x67-0x39-0x0", "Intro.mp3"}, // chip
-    {"0x59-0xab-0xc9-0x0", "Haut.mp3"}, // whitecard
-    {"0xde-0xef-0xe2-0x0", "Show.mp3"}, // card 11
-
-    // Add more tags and their corresponding audio files here 
-    // {"0xXX-0xXX-0xXX-0x0", "AudioFile.mp3"}, // Example of another tag
-    {"0x1e-0x62-0x2c-0x0", "Brot.mp3"}, // card 12
-    {"0x6e-0xa8-0xe5-0x0", "HypaHypa.mp3"}, // card 13
-};
+ 
 
 bool rfid_loop() {
 
@@ -143,7 +153,7 @@ bool rfid_loop() {
 
 #ifdef RFID_USE_AUDIO_TAGS
     // Check if the tag matches any predefined tags
-    if (rfid_audio_tags_enable && compare_tag(tag, rfid_tags, sizeof(rfid_tags) / sizeof(RFIDTag))) { 
+    if (rfid_audio_tags_enable && compare_tag(tag)) { 
 #if RFID_AUDIO_TAGS_DISABLE_AFTER_SCAN  
         rfid_scan_enable = false;   // Automatisch deaktivieren
 #endif
@@ -181,4 +191,107 @@ void set_rfid_audio_tags_enabled(bool enabled) {
 
 bool get_rfid_audio_tags_enabled() {
     return rfid_audio_tags_enable;
+}
+
+void rfid_load_tags_from_fs() {
+    File dir = SD.open("/songs/rfid");
+    if (!dir || !dir.isDirectory()) {
+        log_e("RFID: directory /songs/rfid not found");
+        return;
+    }
+    
+
+    // Erst zählen
+    size_t count = 0;
+    File f = dir.openNextFile();
+    while (f) {
+        if (!f.isDirectory()) {
+            String name = f.name();
+            if (rfid_filename_matches_format(name)) {
+                count++;
+            }
+        }
+        f = dir.openNextFile();
+    }
+
+    dir.close();
+    dir = SD.open("/songs/rfid");
+
+    rfid_tags = new RFIDTag[count];
+    rfid_tags_count = count;
+
+    size_t idx = 0;
+    f = dir.openNextFile();
+    while (f) {
+        if (!f.isDirectory()) {
+            String name = f.name();
+
+            if (rfid_filename_matches_format(name)) {
+
+                String base = name.substring(name.lastIndexOf('/') + 1);
+                base.replace(".mp3", "");
+
+                rfid_tags[idx].tag = strdup(base.c_str());
+                String full = String("/songs/rfid/") + base + ".mp3";
+                rfid_tags[idx].audio_file = strdup(full.c_str());
+
+                log_i("RFID: loaded tag %s -> %s",
+                      rfid_tags[idx].tag,
+                      rfid_tags[idx].audio_file);
+
+                idx++;
+            }
+        }
+        f = dir.openNextFile();
+    }
+}
+
+
+bool rfid_filename_matches_format(const String& name) {
+    if (!name.endsWith(".mp3")) return false;
+
+    String base = name.substring(0, name.length() - 4); // ohne .mp3
+
+    // Splitten in 4 Teile
+    int parts = 0;
+    int last = 0;
+    int pos;
+
+    while ((pos = base.indexOf('-', last)) != -1) {
+        parts++;
+        last = pos + 1;
+    }
+    parts++; // letzter Block
+
+    if (parts != 4) return false;
+
+    // Jetzt jeden Block prüfen
+    last = 0;
+    for (int i = 0; i < 4; i++) {
+        pos = base.indexOf('-', last);
+        String block = (pos == -1) ? base.substring(last) : base.substring(last, pos);
+
+        // Muss mit 0x beginnen
+        if (!block.startsWith("0x")) return false;
+
+        if (i < 3) {
+            // Die ersten 3 Blöcke müssen 0xXX sein → Länge = 4
+            if (block.length() != 4) return false;
+
+            // Hex prüfen
+            char a = block[2];
+            char b = block[3];
+            bool isHexA = ((a >= '0' && a <= '9') || (a >= 'a' && a <= 'f') || (a >= 'A' && a <= 'F'));
+            bool isHexB = ((b >= '0' && b <= '9') || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F'));
+            if (!isHexA || !isHexB) return false;
+
+        } else {
+            // Letzter Block MUSS exakt "0x0" sein
+            if (block != "0x0") return false;
+        }
+
+        last = pos + 1;
+    }
+
+    return true;
 }

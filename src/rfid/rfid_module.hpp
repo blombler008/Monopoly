@@ -7,10 +7,10 @@
 #include <utils/config.hpp>
 #include <gui/lv_gui_containers.hpp>
 
-
-  
+ 
 void rfid_setup(SPIClass* v_spi = &SPI);
-bool rfid_loop();
-
+bool rfid_loop(); 
+void rfid_load_tags_from_fs();
+bool rfid_filename_matches_format(const String& name);
 
 #endif // RFID_MODULE_HPP

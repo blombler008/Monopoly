@@ -21,25 +21,7 @@ void lvglTask(void *pvParameters) {
         vTaskDelay(pdMS_TO_TICKS(lv_timer_handler())); 
     }
 }
-
-void lv_start_loop(void) {
-    // lv_obj_set_style_bg_color(lv_screen_active(), LVBG_COLOR, LV_PART_MAIN);
-    // lv_obj_set_style_text_color(lv_screen_active(), LVFG_COLOR, LV_PART_MAIN);  
-    // xTaskCreatePinnedToCore(
-    //     lvglTask,
-    //     "lvglTick",
-    //     8192,
-    //     NULL,
-    //     1,
-    //     NULL,
-    //     1   // Core 1 empfohlen
-    // );
-    // TimerHandle_t lvglTickTimer = xTimerCreate("lvglTick", pdMS_TO_TICKS(5), pdTRUE, NULL, [](TimerHandle_t xTimer){
-    //     lv_tick_inc(5);
-    // });
-    // xTimerStart(lvglTickTimer, 0);
-}
-
+ 
 void show_toast(const char *msg) {
     lv_obj_t *toast = lv_label_create(lv_layer_top());
     lv_label_set_text(toast, msg);
@@ -60,6 +42,13 @@ void show_toast(const char *msg) {
 
 void add_card_cb(lv_event_t * event) {
     enable_rfid_scan(); // Enable RFID scanning when the "Add Card" button is clicked in settings GUI
+
+
+    // Set audio volume ~half when the "Add Card" button is clicked, 
+    // When the user checked the "Enable RFID Audio Tags" checkbox in settings GUI, 
+    // the volume will be set to 21 by default. the scale is logarithmic, 0-21, 0 being mute and 21 being max volume.
+    audio_set_volume(11);    
+                           
     lv_subject_set_int(&nfc_on, 1);
 }
 

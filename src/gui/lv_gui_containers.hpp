@@ -18,15 +18,7 @@ lv_indev_t* getKeypadIndevDevice();
 lv_timer_t* getTimer();
 void delete_timer();
 void setTimer(lv_timer_t* timer);
-/**
- * @brief Starts the main loop for the LVGL (Light and Versatile Graphics Library) GUI.
- * 
- * This function initializes and starts the main loop required for the LVGL library to
- * handle GUI updates and events. It should be called once during the setup phase of
- * the application to ensure the GUI operates correctly.
- */
-void lv_start_loop(void); 
-
+ 
 /**
  * @brief Creates the Start GUI for the application.
  * 
@@ -52,8 +44,7 @@ void show_keyboard_on_click(lv_event_t * event, lv_obj_t* textInput);
 /////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// HELPER  FUNCTIONS /////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
-
-
+ 
 /**
  * @brief Asserts that the given LittlevGL object is not NULL and is valid.
  *
@@ -67,19 +58,7 @@ void show_keyboard_on_click(lv_event_t * event, lv_obj_t* textInput);
  * @throws std::runtime_error if the object is NULL or not valid.
  */
 lv_obj_t* lv_obj_assert_null(lv_obj_t* obj);
-
-/**
- * @brief Creates a title underline for the given parent object with the specified title.
- * 
- * This function creates a text label with the specified title and aligns it to the top center
- * of the parent object. It also creates a horizontal line below the title label to serve as an
- * underline.
- * 
- * @param parent Pointer to the parent object where the title underline will be created.
- * @param title The title text to be displayed in the label.
- */
-void lv_create_title_underline(lv_obj_t* parent, const char* title);
-
+ 
 /////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// RFID CALLBACKS //////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
@@ -91,37 +70,7 @@ bool get_rfid_audio_tags_enabled();
 
 typedef void (*RFIDCallback)(const char* uid);
 void set_rfid_callback(RFIDCallback callback);
-
-/////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////// GUI CREATION FUNCTIONS ////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////
-void lv_create_add_card_gui(const char* card_name);
-void lv_create_card_found_gui(Card* card);
-void lv_create_card_edit_gui(bool readOnly);
-void lv_create_remove_card_gui(Card* card);
-void lv_create_cards_gui(void);
-void lv_create_transfer_gui(void);
-void lv_create_transfer_confirm_gui(void);
-void lv_create_settings_gui(void);
-void lv_create_admin_card_gui(void);
-void lv_create_player_card_gui(void);
-
-enum GuiScreens {
-    START_GUI, 
-};
-
-/**
- * @brief Switches the current GUI screen to the specified screen.
- * 
- * This function handles the transition between different GUI screens in the application.
- * It ensures that the appropriate GUI setup function is called based on the specified
- * screen identifier.
- * 
- * @param screen The identifier of the screen to switch to.
- * @param user_data Optional user data to pass to the GUI setup function.
- */
-void lv_screen_switch(GuiScreens screen, void* user_data = nullptr);
- 
+  
 /**
  * @brief Times the execution of a GUI creation function asynchronously.
  * 

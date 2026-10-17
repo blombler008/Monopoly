@@ -116,8 +116,7 @@ bool is_sd_card_initialized = false; // Flag to check if the SD card is initiali
 void setupMain() {  
     v_spi->begin(VSPI_SCK, VSPI_MISO, VSPI_MOSI); // Initialize the VSPI bus
     h_spi->begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI); // Initialize the HSPI bus 
-  
-
+   
     pinMode(SD_STATUS_LED, OUTPUT); // Set the SD status LED pin as output 
     digitalWrite(SD_STATUS_LED, LOW); // Turn off the SD status LED initially
     pinMode(SD_DETECT_PIN, INPUT_PULLUP); // Set the SD card detect pin as input with pull-up resistor 
@@ -131,7 +130,6 @@ void setupMain() {
     }
  
 #if USE_DISPLAY
- 
     lv_setup_display(h_spi); // Initialize the display using LittlevGL   
     log_i("Display setup complete"); // Log the completion of the display setup
     lv_create_start_gui(); // Create the initial graphical user interface
@@ -155,6 +153,8 @@ void setupMain() {
         is_sd_card_initialized = true; // Set the flag indicating SD card is initialized
         log_i("SD Card initialized successfully!"); // Log success message for SD card initialization
         coreSettings.load();
+            
+        rfid_load_tags_from_fs();
 #if USE_AUDIO
         audio_setup(); // Set up the audio system
         audio_start_loop();  // Start the audio loop for service 
@@ -178,6 +178,7 @@ void setup() {
  
     setupMain(); 
 }
+
 #if tests == 0
 unsigned long last_display_time = 0;
 unsigned long last_rfid_time = 0;
