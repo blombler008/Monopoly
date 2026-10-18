@@ -118,15 +118,22 @@ bool rfid_loop() {
     if(!rfid_scan_enable)
         return false;
 
+    if (xSemaphoreTake(spi_semaphore, pdMS_TO_TICKS(10)) != pdTRUE) {
+        // Bus gerade belegt (z.B. DMA-Flush) → später nochmal probieren
+        return false;
+    }
+
     log_i("RFID Reader (Pin %d): Waiting for card...", RFID_CS); // Log that the reader is waiting for a card
     // log_i("RFID Reader (Pin %d): Waiting for card...", RFID_CS); // Log that the reader is waiting for a card
     // Check if a new card is present 
     if (!mfrc522->PICC_IsNewCardPresent()) {
+        xSemaphoreGive(spi_semaphore);
         return false; // If no new card is present, exit the loop
     }; // If no new card is present, exit the loop
     
     // Attempt to read the card's serial number
     if (!mfrc522->PICC_ReadCardSerial()) {
+        xSemaphoreGive(spi_semaphore);
         log_i("RFID Reader (Pin %d): Bad read (was card removed too quickly?)", RFID_CS);   
         return false;
     }
@@ -161,6 +168,7 @@ bool rfid_loop() {
         // Disengage the card
         mfrc522->PICC_HaltA();  
         mfrc522->PCD_StopCrypto1();  
+        xSemaphoreGive(spi_semaphore);
         return true;
 #endif
     } else {
@@ -177,7 +185,7 @@ bool rfid_loop() {
     mfrc522->PICC_HaltA();  
     mfrc522->PCD_StopCrypto1();  
      
-
+    xSemaphoreGive(spi_semaphore);
     return true; // Return true if a card was successfully read and processed
 }
 

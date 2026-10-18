@@ -1,14 +1,13 @@
 /**
- * @file lv_tft_espi.cpp
+ * @file lv_tft_espi_custom.cpp
  *
  */
 
 /*********************
  *      INCLUDES
  *********************/
-#include "../../../lvgl_public.h"
-#if LV_USE_TFT_ESPI
-
+#include "lvgl_public.h" 
+#include <helpers/helpers.hpp>
 #include <TFT_eSPI.h>
 
 /*********************
@@ -40,9 +39,10 @@ static void resolution_changed_event_cb(lv_event_t * e);
  *   GLOBAL FUNCTIONS
  **********************/
 
-lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf, uint32_t buf_size_bytes)
+lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf1, void * buf2, uint32_t buf_size_bytes, SPIClass* _SPI)
 {
-    LV_CHECK_ARG(buf != NULL, return NULL);
+    LV_CHECK_ARG(buf1 != NULL, return NULL);
+    LV_CHECK_ARG(buf2 != NULL, return NULL);
     lv_tft_espi_t * dsc = (lv_tft_espi_t *)lv_malloc_zeroed(sizeof(lv_tft_espi_t));
     LV_ASSERT_MALLOC(dsc);
     if(dsc == NULL) return NULL;
@@ -52,23 +52,27 @@ lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf
         lv_free(dsc);
         return NULL;
     }
-
-    dsc->tft = new TFT_eSPI(hor_res, ver_res);
-    dsc->tft->begin();          /* TFT init */
-    dsc->tft->setRotation(0);
+    
+    dsc->tft = new TFT_eSPI(ver_res, hor_res, _SPI); // Create TFT_eSPI instance with swapped width and height for landscape orientation
+    dsc->tft->init();          /* TFT init */
+    // dsc->tft->initDMA(true);          /* TFT init DMA*/
+    dsc->tft->setRotation(2); 
     lv_display_set_driver_data(disp, (void *)dsc);
     lv_display_set_flush_cb(disp, flush_cb);
     lv_display_add_event_cb(disp, resolution_changed_event_cb, LV_EVENT_RESOLUTION_CHANGED, NULL);
-    lv_display_set_buffers(disp, (void *)buf, NULL, buf_size_bytes, LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(disp, (void *)buf1, (void *)buf2, buf_size_bytes, LV_DISPLAY_RENDER_MODE_PARTIAL);
     return disp;
 }
-
 /**********************
  *   STATIC FUNCTIONS
  **********************/
-
 static void flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t * px_map)
 {
+    if (xSemaphoreTake(spi_semaphore, portMAX_DELAY) != pdTRUE) {
+        lv_display_flush_ready(disp);
+        return;
+    }
+
     lv_tft_espi_t * dsc = (lv_tft_espi_t *)lv_display_get_driver_data(disp);
 
     uint32_t w = (area->x2 - area->x1 + 1);
@@ -76,12 +80,21 @@ static void flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t * px_m
 
     dsc->tft->startWrite();
     dsc->tft->setAddrWindow(area->x1, area->y1, w, h);
-    dsc->tft->pushColors((uint16_t *)px_map, w * h, true);
+    dsc->tft->pushImage(area->x1, area->y1, w, h, (uint16_t *)px_map);
     dsc->tft->endWrite();
 
-    lv_display_flush_ready(disp);
+    xSemaphoreGive(spi_semaphore);
 
+    lv_display_flush_ready(disp);
 }
+ 
+IRAM_ATTR bool notify_lvgl_flush_ready(void *user_ctx)
+{
+    lv_display_t *disp_driver = (lv_display_t *)user_ctx;
+    lv_display_flush_ready(disp_driver);
+    return false;
+}
+
 
 static void resolution_changed_event_cb(lv_event_t * e)
 {
@@ -94,18 +107,16 @@ static void resolution_changed_event_cb(lv_event_t * e)
     /* handle rotation */
     switch(rot) {
         case LV_DISPLAY_ROTATION_0:
-            dsc->tft->setRotation(0);   /* Portrait orientation */
+            dsc->tft->setRotation(1);   /* Portrait orientation */
             break;
         case LV_DISPLAY_ROTATION_90:
-            dsc->tft->setRotation(1);   /* Landscape orientation */
+            dsc->tft->setRotation(2);   /* Landscape orientation */
             break;
         case LV_DISPLAY_ROTATION_180:
-            dsc->tft->setRotation(2);   /* Portrait orientation, flipped */
+            dsc->tft->setRotation(3);   /* Portrait orientation, flipped */
             break;
         case LV_DISPLAY_ROTATION_270:
-            dsc->tft->setRotation(3);   /* Landscape orientation, flipped */
+            dsc->tft->setRotation(0);   /* Landscape orientation, flipped */
             break;
     }
-}
-
-#endif /*LV_USE_TFT_ESPI*/
+} 

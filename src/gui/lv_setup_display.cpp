@@ -1,5 +1,6 @@
 #include "lv_setup_display.hpp"
 #include "esp_heap_caps.h"
+#include "drivers/lv_tft_espi_custom.h"
 
 /**
  * @struct lv_tft_espi_t
