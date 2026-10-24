@@ -1,5 +1,5 @@
 --- "patches/original\\TFT_eSPI\\TFT_eSPI_ESP32_S3.c"	2023-12-22 02:07:33.000000000 +0100
-+++ "patches/modified\\TFT_eSPI\\TFT_eSPI_ESP32_S3.c"	2026-10-17 02:07:32.322850200 +0200
++++ "patches/modified\\TFT_eSPI\\TFT_eSPI_ESP32_S3.c"	2026-10-24 19:29:34.055184100 +0200
 @@ -7,29 +7,33 @@
  ////////////////////////////////////////////////////////////////////////////////////////
  // Global variables
@@ -61,16 +61,20 @@
    spiBusyCheck = 0;
  }
  
-@@ -646,6 +651,8 @@
+@@ -646,16 +651,19 @@
    // of 32768 pixels maximum. (equivalent to an area of ~320 x 100 pixels)
    bool temp = _swapBytes;
    _swapBytes = false;
-+  log_i("len=%d", len);
-+  log_i("buff=%p", image);
++  // log_i("len=%d", len);
++  // log_i("buff=%p", image);
++   
    while(len>0x4000) { // Transfer 16-bit pixels in blocks if len*2 over 65536 bytes
      pushPixels(image, 0x400);
      len -= 0x400; image+= 0x400; // Arbitrarily send 1K pixel blocks (2Kbytes)
-@@ -655,7 +662,7 @@
+   }
+   _swapBytes = temp;
+-
++  
    esp_err_t ret;
    static spi_transaction_t trans;
  
@@ -79,15 +83,18 @@
  
    trans.user = (void *)1;
    trans.tx_buffer = image;  //finally send the line data
-@@ -663,6 +670,7 @@
+@@ -663,8 +671,9 @@
    trans.flags = 0;                //SPI_TRANS_USE_TXDATA flag
  
    ret = spi_device_queue_trans(dmaHAL, &trans, portMAX_DELAY);
 + 
    assert(ret == ESP_OK);
- 
+-
++ 
    spiBusyCheck++;
-@@ -676,6 +684,7 @@
+ }
+ 
+@@ -676,6 +685,7 @@
  // Fixed const data assumed, will NOT clip or swap bytes
  void TFT_eSPI::pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t const* image)
  {
@@ -95,7 +102,7 @@
    if ((w == 0) || (h == 0) || (!DMA_Enabled)) return;
  
    uint16_t *buffer = (uint16_t*)image;
-@@ -690,6 +699,7 @@
+@@ -690,6 +700,7 @@
    // of 32768 pixels maximum. (equivalent to an area of ~320 x 100 pixels)
    bool temp = _swapBytes;
    _swapBytes = false;
@@ -103,13 +110,12 @@
    while(len>0x4000) { // Transfer 16-bit pixels in blocks if len*2 over 65536 bytes
      pushPixels(buffer, 0x400);
      len -= 0x400; buffer+= 0x400; // Arbitrarily send 1K pixel blocks (2Kbytes)
-@@ -719,7 +729,9 @@
+@@ -719,7 +730,8 @@
  ***************************************************************************************/
  // This will clip and also swap bytes if setSwapBytes(true) was called by sketch
  void TFT_eSPI::pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t* image, uint16_t* buffer)
 -{
-+{   
-+  
++{    
 +  // log_d("pushImageDMA: x=%d y=%d w=%d h=%d", x, y, w, h);
    if ((x >= _vpW) || (y >= _vpH) || (!DMA_Enabled)) return;
  
@@ -134,31 +140,62 @@
    while(len>0x4000) { // Transfer 16-bit pixels in blocks if len*2 over 65536 bytes
      pushPixels(buffer, 0x400);
      len -= 0x400; buffer+= 0x400; // Arbitrarily send 1K pixel blocks (2Kbytes)
-@@ -825,7 +838,9 @@
+@@ -813,8 +826,9 @@
+ 
+ void IRAM_ATTR dc_callback(spi_transaction_t *spi_tx)
+ {
+-  if ((bool)spi_tx->user) {DC_D;}
+-  else {DC_C;}
++  // if ((bool)spi_tx->user) {DC_D;}
++  // else {DC_C;}
++  CS_L;
+ }
+ 
+ /***************************************************************************************
+@@ -825,7 +839,14 @@
  
  void IRAM_ATTR dma_end_callback(spi_transaction_t *spi_tx)
  {
 -  WRITE_PERI_REG(SPI_DMA_CONF_REG(spi_host), 0);
-+ WRITE_PERI_REG( SPI_DMA_CONF_REG(SPI_DMA_CH_AUTO) , 0b11 );  //workaround
-+  // WRITE_PERI_REG(SPI_DMA_CONF_REG(spi_host), 0);
-+  ets_printf("DMA END CALLBACK!\n");
++  WRITE_PERI_REG(SPI_DMA_CONF_REG(SPI_DMA_CH_AUTO), 0b11);
++  // gpio_set_level((gpio_num_t)TFT_CS, 1);
++  CS_H;
++  // GPIO.out_w1ts = (1 << TFT_CS);
++  // LVGL informieren
++  if (TFT_eSPI::instance && TFT_eSPI::instance->lvgl_dma_callback) {
++    TFT_eSPI::instance->lvgl_dma_callback(TFT_eSPI::instance->lvgl_dma_user_ctx);
++  }
  }
  
  /***************************************************************************************
-@@ -836,6 +851,7 @@
+@@ -834,8 +855,9 @@
+ ***************************************************************************************/
+ bool TFT_eSPI::initDMA(bool ctrl_cs)
  {
++  
    if (DMA_Enabled) return false;
- 
-+  log_i("DMA initialisation");
+-
++  log_i("DMA initialisation"); 
    esp_err_t ret;
    spi_bus_config_t buscfg = {
      .mosi_io_num = TFT_MOSI,
-@@ -866,7 +882,7 @@
+@@ -844,6 +866,7 @@
+     .quadwp_io_num = -1,
+     .quadhd_io_num = -1,
+     .data4_io_num = -1,
++  
+     .data5_io_num = -1,
+     .data6_io_num = -1,
+     .data7_io_num = -1,
+@@ -866,9 +889,9 @@
      .clock_speed_hz = SPI_FREQUENCY,
      .input_delay_ns = 0,
      .spics_io_num = pin,
 -    .flags = SPI_DEVICE_NO_DUMMY, //0,
 +    .flags = SPI_DEVICE_NO_DUMMY, //0, 
      .queue_size = 1,            // Not using queues
-     .pre_cb = 0, //dc_callback, //Callback to handle D/C line (not used)
+-    .pre_cb = 0, //dc_callback, //Callback to handle D/C line (not used)
++    .pre_cb = dc_callback, //Callback to handle D/C line (not used)
      .post_cb = dma_end_callback //Callback to end transmission
+   };
+   ret = spi_bus_initialize(spi_host, &buscfg, DMA_CHANNEL);

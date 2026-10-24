@@ -128,7 +128,8 @@ void setupMain() {
         pinMode(CSPins[i], OUTPUT);
         digitalWrite(CSPins[i], HIGH);
     }
- 
+    
+    xSemaphoreGive(spi_semaphore); // initial freigeben
 #if USE_DISPLAY
     lv_setup_display(h_spi); // Initialize the display using LittlevGL   
     log_i("Display setup complete"); // Log the completion of the display setup
@@ -167,10 +168,8 @@ void setupMain() {
 #endif  
     log_i("Starting loop"); 
 } 
- 
- 
+  
 void setup() { 
-    
     uint32_t oldCpuFreq = getCpuFrequencyMhz(); // Get the current CPU frequency in MHz
     setCpuFrequencyMhz(240);
     Serial.begin(MONITOR_SPEED); // Initialize serial communication for debugging
@@ -208,7 +207,7 @@ void toggle_led() {
  
 
 void loop() { 
-    log_d("Loop begin");
+    // log_d("Loop begin");
     uint32_t now = esp_timer_get_time() / 1000; // Get the current time in milliseconds
     static uint32_t last_gui = 0;
     static uint32_t last_rfid = 0;
@@ -216,8 +215,7 @@ void loop() {
     static uint32_t last_loop = 0;
 
 #if USE_DISPLAY   
-    lv_timer_handler(); // Call the LittlevGL timer handler to update the display and handle events 
-    display_dma_poll(); // Poll the display DMA status to ensure smooth rendering  
+    lv_timer_handler(); // Call the LittlevGL timer handler to update the display and handle events  
 #endif
 
 #if USE_RFID 

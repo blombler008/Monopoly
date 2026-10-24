@@ -1,7 +1,7 @@
 #include "helpers.hpp"
 
 
-SemaphoreHandle_t spi_semaphore = xSemaphoreCreateMutex();
+SemaphoreHandle_t spi_semaphore = xSemaphoreCreateBinary();
 
 void format_uid_to_hex_string(char* tag, Uid* uid, size_t tag_size) { 
     memset(tag, 0, tag_size); // Clear the tag buffer to ensure it is empty before appending data, and prevent buffer overflow

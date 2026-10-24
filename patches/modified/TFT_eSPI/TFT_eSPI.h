@@ -429,6 +429,7 @@ class TFT_eSPI : public Print { friend class TFT_eSprite; // Sprite class has ac
  //--------------------------------------- public ------------------------------------//
  public:
 
+  static TFT_eSPI* instance;
   TFT_eSPI(int16_t _W = TFT_WIDTH, int16_t _H = TFT_HEIGHT, SPIClass* _SPI = &SPI);
 
   // init() and begin() are equivalent, begin() included for backwards compatibility
@@ -794,6 +795,18 @@ class TFT_eSPI : public Print { friend class TFT_eSprite; // Sprite class has ac
            // Check if the DMA is complete - use while(tft.dmaBusy); for a blocking wait
   bool     dmaBusy(void); // returns true if DMA is still in progress
   void     dmaWait(void); // wait until DMA is complete
+  
+// custom dma additions:
+  void (*lvgl_dma_callback)(void *user_ctx) = nullptr;
+  void *lvgl_dma_user_ctx = nullptr; 
+  
+  void setLvglDMACallback(void (*cb)(void *), void *ctx) {
+      lvgl_dma_callback = cb;
+      lvgl_dma_user_ctx = ctx;
+  }
+
+
+
 
   bool     DMA_Enabled = false;   // Flag for DMA enabled state
   uint8_t  spiBusyCheck = 0;      // Number of ESP32 transfer buffers to check
@@ -902,6 +915,9 @@ class TFT_eSPI : public Print { friend class TFT_eSprite; // Sprite class has ac
 
   bool     locked, inTransaction, lockTransaction; // SPI transaction and mutex lock flags
 
+
+
+  
  //-------------------------------------- protected ----------------------------------//
  protected:
 

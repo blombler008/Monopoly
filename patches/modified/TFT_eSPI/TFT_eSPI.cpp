@@ -15,6 +15,7 @@
 
 #include "TFT_eSPI.h"
 
+TFT_eSPI* TFT_eSPI::instance = nullptr;
 #if defined (ESP32)
   #if defined(CONFIG_IDF_TARGET_ESP32S3)
     #include "Processors/TFT_eSPI_ESP32_S3.c" // Tested with SPI and 8-bit parallel
@@ -436,10 +437,11 @@ bool TFT_eSPI::clipWindow(int32_t *xs, int32_t *ys, int32_t *xe, int32_t *ye)
 ** Function name:           TFT_eSPI
 ** Description:             Constructor , we must use hardware SPI pins
 ***************************************************************************************/
+
 TFT_eSPI::TFT_eSPI(int16_t w, int16_t h, SPIClass* _SPI)
 {
   spi = (*_SPI); // Pointer to SPI class instance
-
+  instance = this;
   _init_width  = _width  = w; // Set by specific xxxxx_Defines.h file or by users sketch
   _init_height = _height = h; // Set by specific xxxxx_Defines.h file or by users sketch
 
@@ -662,8 +664,17 @@ void TFT_eSPI::init(uint8_t tc)
 #if defined (TFT_CS) && !defined(RP2040_PIO_INTERFACE)
   // Set to output once again in case MISO is used for CS
   if (TFT_CS >= 0) {
-    pinMode(TFT_CS, OUTPUT);
-    digitalWrite(TFT_CS, HIGH); // Chip select high (inactive)
+    // pinMode(TFT_CS, OUTPUT); 
+    gpio_config_t io_conf = {
+      .pin_bit_mask = (1ULL << TFT_CS),
+      .mode = GPIO_MODE_OUTPUT,
+      .pull_up_en = GPIO_PULLUP_DISABLE,
+      .pull_down_en = GPIO_PULLDOWN_DISABLE,
+      .intr_type = GPIO_INTR_DISABLE,
+    };
+    gpio_config(&io_conf);
+    gpio_set_level((gpio_num_t)TFT_CS, 1);
+    // digitalWrite(TFT_CS, HIGH); // Chip select high (inactive)
   }
 #elif defined (ARDUINO_ARCH_ESP8266) && !defined (TFT_PARALLEL_8_BIT) && !defined (RP2040_PIO_SPI)
   spi.setHwCs(1); // Use hardware SS toggling

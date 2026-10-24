@@ -1,11 +1,41 @@
 --- "patches/original\\TFT_eSPI\\TFT_eSPI.h"	2026-10-17 01:54:25.298288100 +0200
-+++ "patches/modified\\TFT_eSPI\\TFT_eSPI.h"	2026-10-17 01:53:04.004720500 +0200
-@@ -429,7 +429,7 @@
++++ "patches/modified\\TFT_eSPI\\TFT_eSPI.h"	2026-10-24 19:30:50.785254100 +0200
+@@ -429,7 +429,8 @@
   //--------------------------------------- public ------------------------------------//
   public:
  
 -  TFT_eSPI(int16_t _W = TFT_WIDTH, int16_t _H = TFT_HEIGHT);
++  static TFT_eSPI* instance;
 +  TFT_eSPI(int16_t _W = TFT_WIDTH, int16_t _H = TFT_HEIGHT, SPIClass* _SPI = &SPI);
  
    // init() and begin() are equivalent, begin() included for backwards compatibility
    // Sketch defined tab colour option is for ST7735 displays only
+@@ -794,6 +795,18 @@
+            // Check if the DMA is complete - use while(tft.dmaBusy); for a blocking wait
+   bool     dmaBusy(void); // returns true if DMA is still in progress
+   void     dmaWait(void); // wait until DMA is complete
++  
++// custom dma additions:
++  void (*lvgl_dma_callback)(void *user_ctx) = nullptr;
++  void *lvgl_dma_user_ctx = nullptr; 
++  
++  void setLvglDMACallback(void (*cb)(void *), void *ctx) {
++      lvgl_dma_callback = cb;
++      lvgl_dma_user_ctx = ctx;
++  }
++
++
++
+ 
+   bool     DMA_Enabled = false;   // Flag for DMA enabled state
+   uint8_t  spiBusyCheck = 0;      // Number of ESP32 transfer buffers to check
+@@ -902,6 +915,9 @@
+ 
+   bool     locked, inTransaction, lockTransaction; // SPI transaction and mutex lock flags
+ 
++
++
++  
+  //-------------------------------------- protected ----------------------------------//
+  protected:
+ 

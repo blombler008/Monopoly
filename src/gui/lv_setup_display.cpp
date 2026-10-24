@@ -36,26 +36,10 @@ static lv_color16_t* draw_buf_1 = nullptr;
 static lv_color16_t* draw_buf_2 = nullptr; 
 
 static size_t pixel_count = DMA_BUF_BYTES / sizeof(lv_color16_t); 
-
-
+ 
 static lv_tft_espi_t* g_disp = nullptr;
 static volatile bool dma_active = false;
-
-static void dma_timer_cb(void* pvParameters) {
-    
-    for (;;)  {       
-        if (dma_active && !g_disp->tft->dmaBusy()) {
-            dma_active = false;
-
-            g_disp->tft->endWrite();
-
-            lv_disp_flush_ready(g_disp->disp);
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(1));   // 1ms Polling reicht
-    } 
-}
-
+ 
 // getbuffer
 lv_color16_t* getNewBuffer(){
     return (lv_color16_t*)heap_caps_malloc(
@@ -103,6 +87,7 @@ void lv_log(lv_log_level_t level, const char * buf) {
     memcpy(&log_buffer[log_write_pos], buf, len);
     log_write_pos += len;
 }
+
 #define CHUNK_SIZE 1024
 #include "driver/uart.h"
 
@@ -153,12 +138,13 @@ void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data)
     // log_i("Touch read callback called"); // Log when the touch read callback is called
     static uint16_t x, y;
  
-    if( display_dma_is_active() ) {
+    if( displayDriver->tft->dmaBusy() ) {
         // log_i("DMA is active, skipping touch read"); // Log when DMA is active and touch read is skipped
-        data->state = LV_INDEV_STATE_RELEASED;
+        // data->state = LV_INDEV_STATE_RELEASED;
         return;
     }
- 
+    
+    xSemaphoreTake(spi_semaphore, pdMS_TO_TICKS(1));
     // log_i(displayDriver->tft->getTouch(&x, &y, 350) ? "Touch detected" : "No touch detected"); // Log whether a touch is detected or not
     if(displayDriver->tft->getTouch(&x, &y, 350)) { 
         // Invert the touch coordinates to match the display orientation and swap x and y
@@ -185,6 +171,7 @@ void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data)
     {
         data->state = LV_INDEV_STATE_RELEASED;
     }
+    xSemaphoreGive(spi_semaphore);
 }
 
 // void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data) { 
@@ -278,9 +265,9 @@ void lv_setup_display(SPIClass* _SPI) {
     lv_tick_set_cb(tick_wrapper); // Set the tick callback function for LVGL
 
     // Create a display using the TFT_eSPI library 
+    pinMode(TFT_CS, OUTPUT); 
     displayInstance = lv_tft_espi_create(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT,  draw_buf_1, draw_buf_2, DMA_BUF_BYTES, _SPI); 
-    
-    // lv_timer_create(dma_timer_cb, 1, NULL); // Create a timer to check the DMA status every 5 ms
+     
     displayDriver = (lv_tft_espi_t*)lv_display_get_driver_data(displayInstance); // Get the display driver data
     
     if (displayDriver == NULL) {
@@ -392,23 +379,10 @@ lv_obj_t* lv_obj_assert_null(lv_obj_t* obj) {
     return obj;
 }
 
-
-bool display_dma_is_active()
-{
-    return g_disp->tft->dmaBusy();
-}
-
+ 
 lv_display_t* display_get()
 {
     return displayInstance;
 }
 
-void display_dma_poll()
-{
-    if (g_disp == nullptr)
-        return;
-    
-    if (!display_dma_is_active()) { 
-        g_disp->tft->endWrite(); 
-    } 
-}
+ 

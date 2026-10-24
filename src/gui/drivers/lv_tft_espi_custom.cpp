@@ -1,32 +1,4 @@
-/**
- * @file lv_tft_espi_custom.cpp
- *
- */
-
-/*********************
- *      INCLUDES
- *********************/
-#include "lvgl_public.h" 
-#include <helpers/helpers.hpp>
-#include <TFT_eSPI.h>
-
-/*********************
- *      DEFINES
- *********************/
-
-/**********************
- *      TYPEDEFS
- **********************/
-typedef struct {
-    TFT_eSPI * tft;
-} lv_tft_espi_t;
-
-/**********************
- *  STATIC PROTOTYPES
- **********************/
-static void flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t * px_map);
-static void resolution_changed_event_cb(lv_event_t * e);
-
+#include "lv_tft_espi_custom.h"
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -39,6 +11,10 @@ static void resolution_changed_event_cb(lv_event_t * e);
  *   GLOBAL FUNCTIONS
  **********************/
 
+typedef struct {
+    TFT_eSPI * tft;
+} lv_tft_espi_t;
+ 
 lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf1, void * buf2, uint32_t buf_size_bytes, SPIClass* _SPI)
 {
     LV_CHECK_ARG(buf1 != NULL, return NULL);
@@ -55,7 +31,8 @@ lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf
     
     dsc->tft = new TFT_eSPI(ver_res, hor_res, _SPI); // Create TFT_eSPI instance with swapped width and height for landscape orientation
     dsc->tft->init();          /* TFT init */
-    // dsc->tft->initDMA(true);          /* TFT init DMA*/
+    dsc->tft->initDMA(false);          /* TFT init DMA*/
+    dsc->tft->setLvglDMACallback(notify_lvgl_flush_ready, disp);
     dsc->tft->setRotation(2); 
     lv_display_set_driver_data(disp, (void *)dsc);
     lv_display_set_flush_cb(disp, flush_cb);
@@ -69,7 +46,7 @@ lv_display_t * lv_tft_espi_create(uint32_t hor_res, uint32_t ver_res, void * buf
 static void flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t * px_map)
 {
     if (xSemaphoreTake(spi_semaphore, portMAX_DELAY) != pdTRUE) {
-        lv_display_flush_ready(disp);
+        // lv_display_flush_ready(disp);
         return;
     }
 
@@ -80,19 +57,18 @@ static void flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t * px_m
 
     dsc->tft->startWrite();
     dsc->tft->setAddrWindow(area->x1, area->y1, w, h);
-    dsc->tft->pushImage(area->x1, area->y1, w, h, (uint16_t *)px_map);
+    // dsc->tft->pushImage(area->x1, area->y1, w, h, (uint16_t *)px_map);
     dsc->tft->endWrite();
-
-    xSemaphoreGive(spi_semaphore);
-
-    lv_display_flush_ready(disp);
+    dsc->tft->pushPixelsDMA((uint16_t *)px_map, w * h);
 }
- 
-IRAM_ATTR bool notify_lvgl_flush_ready(void *user_ctx)
-{
+
+IRAM_ATTR void notify_lvgl_flush_ready(void *user_ctx) {
+    // ets_printf("dma_callback");
     lv_display_t *disp_driver = (lv_display_t *)user_ctx;
+    lv_tft_espi_t * dsc = (lv_tft_espi_t *)lv_display_get_driver_data(disp_driver);
+    // dsc->tft->endWrite(); 
     lv_display_flush_ready(disp_driver);
-    return false;
+    xSemaphoreGiveFromISR(spi_semaphore, NULL); 
 }
 
 

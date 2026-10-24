@@ -8,6 +8,9 @@ bool killATask = false;
 void audioloop(void *) {    
     while (1) {
         delayMicroseconds(100); // Allow other tasks to run, adjust as needed
+        if(!isPlaying) {
+            continue;
+        }
         // delay(1); // To ensure the task is watchdog-safe 
         audio.loop();
         if(killATask) {
@@ -53,7 +56,7 @@ void play_beeb_high() {
 }
 
 void audio_info(Audio::msg_t m) {
-    Serial.printf("%s: %s\n", m.s, m.msg);
+    log_i("%s: %s\n", m.s, m.msg);
 
     switch (m.e) {  // make a switch statement to handle different events in case i need it.
         case Audio::evt_eof:
