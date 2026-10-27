@@ -9,6 +9,8 @@
 #include <helpers/helpers.hpp>
 #include <includes/includes.hpp>
 
+
+
 /**
  * @brief Starts audio playback of the specified song.
  *
@@ -50,12 +52,12 @@ void audio_playback_stop();
 void audio_setup();
 
 /**
- * @brief Starts the audio loop task on a specific core.
+ * Starts the audio loop task on a specific core.
  *
- * This function creates and starts a new FreeRTOS task that runs the `audioloop` function.
- * The task is pinned to core 1 and is given a stack size of 10000 bytes.
+ * @param core Target ESP32 core.
+ *        0 = APP CPU
+ *        1 = PRO CPU
  *
- * @note Ensure that the `audioloop` function is defined elsewhere in your code.
  */
 void audio_start_loop(int core = 0);
 
@@ -79,9 +81,9 @@ void audio_stop_loop();
  *       audio library being used. The volume level may be adjusted in discrete
  *       steps or may have a non-linear relationship with the input value.
  * 
- * @note The default volume level is set to a value of 21.
+ * @note The default volume level is set to a value of 12.
  */
-void audio_set_volume(uint8_t vol = 21);
+void audio_set_volume(uint8_t vol = 12);
 
 /**
  * @brief Mutes or unmutes the audio output.
