@@ -1,4 +1,5 @@
 #include "audio.hpp"
+#include "synth.hpp"
 
 Audio audio;
 
@@ -6,17 +7,23 @@ bool isPlaying = false;
 bool killATask = false;
 
 void audioloop(void *) {    
-    while (1) { 
-        if(killATask) vTaskDelete(NULL);
-        
-        if(!isPlaying) {
-            vTaskDelay(pdMS_TO_TICKS(10));
-            continue;
-        }
+    while(1)
+    {
+        if(killATask) vTaskDelete(NULL); 
 
-        audio.loop();
+        if(isPlaying) audio.loop();
+        
+        else if(synth_is_active()) { 
+            synth_write_to_i2s(audio.getI2SHandle());
+        }
+        else
+            vTaskDelay(
+                pdMS_TO_TICKS(10)
+            );
+        
+
         vTaskDelay(1);
-    } 
+    }
 }
 
 void audio_mute(bool mute) {
@@ -42,18 +49,6 @@ void audio_playback_stop() {
     isPlaying = false;
 }
 
-void play_beeb_single() {
-    //audio_playback_start("/audio/beep.mp3"); 
-}
-void play_beeb_fast() {
-    // audio.loop();
-    //audio_playback_start("/audio/beep.mp3"); 
-}
-void play_beeb_high() {
-    // audio.setLoop(true); 
-    //audio_playback_start("/audio/beep.mp3"); 
-}
-
 void audio_info(Audio::msg_t m) {
     log_i("%s: %s", m.s, m.msg);
 
@@ -77,6 +72,8 @@ void audio_setup() {
     audio.setVolume(12); 
     audio.setTone(-3,-3,-12); 
     audio_mute();
+    
+    synth_init();
     log_i("Audio Driver initialized");
  
 }
@@ -96,3 +93,63 @@ void audio_set_volume(uint8_t vol) {
 bool audio_is_playing() {
     return isPlaying;
 } 
+
+void audio_beep(WaveShape shape, float frequency, uint32_t durationMs, float volume) {
+    
+    if(isPlaying) return;
+
+    audio_mute(false);
+   
+    synth_beep(shape, frequency, durationMs, volume*8);
+    
+}
+ 
+void play_beeb_single() {
+    audio_beep(
+        WaveShape::Triangle,
+        420,
+        120
+    );
+}
+
+void play_beeb_fast() {
+    static uint32_t nextBeep = 0;
+
+    uint32_t now = millis();
+
+    if(now < nextBeep)
+    {
+        return;
+    }
+
+    int timeX = 50;
+
+    nextBeep = now + timeX*2; // 120ms Ton + 120ms Pause
+
+    audio_beep(
+        WaveShape::Triangle,
+        420,
+        timeX
+    );
+}
+
+void play_beeb_high_fast() {
+    static uint32_t nextBeep = 0;
+
+    uint32_t now = millis();
+
+    if(now < nextBeep)
+    {
+        return;
+    }
+
+    int timeX = 50;
+
+    nextBeep = now + timeX*2; // 120ms Ton + 120ms Pause
+
+    audio_beep(
+        WaveShape::Triangle,
+        840,
+        timeX
+    ); 
+}

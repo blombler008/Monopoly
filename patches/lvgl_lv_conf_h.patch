@@ -1,5 +1,5 @@
 --- "patches/original\\lvgl\\lv_conf.h"	2026-10-13 21:22:55.867903800 +0200
-+++ "patches/modified\\lvgl\\lv_conf.h"	2026-10-18 14:07:55.676398800 +0200
++++ "patches/modified\\lvgl\\lv_conf.h"	2026-10-24 20:15:22.355216600 +0200
 @@ -0,0 +1,2024 @@
 +/**
 + * @file lv_conf.h

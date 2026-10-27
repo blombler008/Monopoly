@@ -7,9 +7,40 @@
 
 #include <utils/config.hpp>
 #include <helpers/helpers.hpp>
-#include <includes/includes.hpp>
+#include <includes/includes.hpp> 
 
+enum class WaveShape {
+    Sine,
+    Square,
+    Triangle,
+    Saw
+};
 
+/**
+ * Short feedback sound.
+ */
+void play_beeb_single();
+
+/**
+ * Repeating transaction processing sound.
+ */
+void play_beeb_fast();
+
+/**
+ * Success / completion sound.
+ */
+void play_beeb_high_fast();
+ /**
+ * Generates a synthesized beep.
+ *
+ * If music playback is currently active the request is ignored.
+ *
+ * @param shape Waveform type.
+ * @param frequency Frequency in Hz.
+ * @param durationMs Playback duration in milliseconds.
+ * @param volume Output volume 0.0f - 1.0f.
+ */
+void audio_beep(WaveShape shape, float frequency, uint32_t durationMs, float volume = 1.0f);
 
 /**
  * @brief Starts audio playback of the specified song.
@@ -60,14 +91,7 @@ void audio_setup();
  *
  */
 void audio_start_loop(int core = 0);
-
-/**
- * @brief Stops the audio loop task.
- *
- * This function stops the audio loop task by suspending the task and then deleting it.
- */
-void audio_stop_loop();
-
+ 
 /**
  * @brief Sets the audio volume to the specified level.
  * 

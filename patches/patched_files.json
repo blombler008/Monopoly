@@ -28,5 +28,15 @@
         "lib": "TFT_eSPI",
         "file": "User_Setup.h",
         "patch": "TFT_eSPI_User_Setup_h.patch"
+    },
+    {
+        "lib": "ESP32-audioI2S",
+        "file": "Audio.cpp",
+        "patch": "ESP32-audioI2S_Audio_cpp.patch"
+    },
+    {
+        "lib": "ESP32-audioI2S",
+        "file": "Audio.h",
+        "patch": "ESP32-audioI2S_Audio_h.patch"
     }
 ]

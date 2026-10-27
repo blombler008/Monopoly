@@ -1,0 +1,28 @@
+--- "patches/original\\ESP32-audioI2S\\Audio.cpp"	2026-10-27 22:58:21.755133900 +0100
++++ "patches/modified\\ESP32-audioI2S\\Audio.cpp"	2026-10-27 22:58:45.782876500 +0100
+@@ -3880,7 +3880,11 @@
+             //-------------------------------------------------------------------------------------------------------
+             // samples manipulation
+             //-------------------------------------------------------------------------------------------------------
+-            audio_process_raw_samples(m_i2sWorkBuff.get(), readWords);
++            if(audio_process_raw_samples_cb) {
++                audio_process_raw_samples_cb(m_i2sWorkBuff.get(), readWords);
++            } else {
++                audio_process_raw_samples(m_i2sWorkBuff.get(), readWords);
++            }
+ 
+             if (settings.VU_LEVEL) calculateVUlevel(m_i2sWorkBuff.get(), readWords);
+             if (settings.SPECTRUM) calculateSpectrum(m_i2sWorkBuff.get(), readWords);
+@@ -3888,7 +3892,11 @@
+             if (m_f_forceMono) stereo2mono(m_i2sWorkBuff.get(), readWords);
+             if (settings.VOLUME_CONTROL) Gain(m_i2sWorkBuff.get(), readWords);
+ 
+-            audio_process_i2s(m_i2sWorkBuff.get(), (int32_t)readWords, &continueI2S);
++            if(audio_process_i2s_cb) {
++                audio_process_i2s_cb(m_i2sWorkBuff.get(), readWords, &continueI2S);
++            } else {
++                audio_process_i2s(m_i2sWorkBuff.get(), readWords, &continueI2S);
++            }
+             //--------------------------------------------------------------------------------------------------------
+             // m_i2sWorkBuff -> I2S
+             //--------------------------------------------------------------------------------------------------------

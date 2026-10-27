@@ -119,13 +119,26 @@ void keypad_read_cb(lv_indev_t * indev, lv_indev_data_t* data) {
     static uint8_t last_key = 0; // Variable to store the last key pressed
     I2CKeyPad keypad = getKeypad(); // Get the keypad object
 
-    if(!keypad.isPressed()) return; // Return if no key is pressed
+    if(!keypad.isPressed()) {last_key = 0; return;}; // Return if no key is pressed
 
     uint8_t key = keypad.getChar(); // Get the key pressed on the keypad 
 
     data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
     data->key = key; // Set the key to the key pressed
  
+    if(key == 8) {
+        play_beeb_fast();
+        goto labe;
+    }
+    if(key == 13) {
+        play_beeb_high_fast();
+        goto labe;
+    }
+    if(key && last_key != key) { 
+        play_beeb_single(); 
+    }
+    labe:
+
     if (key) {
         data->state = LV_INDEV_STATE_PRESSED; // Check if the key is pressed
     }
@@ -133,8 +146,7 @@ void keypad_read_cb(lv_indev_t * indev, lv_indev_data_t* data) {
     last_key = key; // Set the last key to the current key
 }
 
-void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data)
-{
+void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data) {
     // log_i("Touch read callback called"); // Log when the touch read callback is called
     static uint16_t x, y;
  
@@ -173,28 +185,7 @@ void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data)
     }
     xSemaphoreGive(spi_semaphore);
 }
-
-// void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data) { 
-//     uint16_t touchpad_x, touchpad_y; // Variables to store the touchpad coordinates
-//
-//     bool touchpad_pressed = displayDriver->tft->getTouch(&touchpad_x, &touchpad_y, 300); // Get the touchpad coordinates 
-//     // log_i("Touch: x=%d, y=%d, pressed=%d", touchpad_x, touchpad_y, touchpad_pressed); // Log the touch coordinates and state to the serial output
-//     // uint16_t raw_touchpad_x, raw_touchpad_y; // Variables to store the touchpad coordinates
-//     // bool raw_touchpad_pressed = displayDriver->tft->getTouchRaw(&raw_touchpad_x, &raw_touchpad_y); // Get the raw touchpad coordinates
-//     // log_i("Raw Touch: x=%d, y=%d, pressed=%d", raw_touchpad_x, raw_touchpad_y, raw_touchpad_pressed); // Log the raw touch coordinates and state to the serial output
-// 
-//     if (touchpad_pressed) { // Check if the touchpad is pressed
-//         data->point.y = touchpad_x; // swap x and y
-//         data->point.x = 240 - touchpad_y;  // swap x and y and invert x
-//         data->state = LV_INDEV_STATE_PRESSED; // Set the state to pressed
-//     } else {
-//         data->state = LV_INDEV_STATE_RELEASED; // Set the state to released
-//     }
-//
-//     // log_i("Touch: x=%d, y=%d, state=%d", data->point.x, data->point.y, data->state); // Log the touch coordinates and state to the serial output
-//  
-// }
-
+ 
 static uint32_t tick_wrapper(void) {
     return esp_timer_get_time() / 1000; // Return the current time in milliseconds
 }
@@ -206,8 +197,7 @@ void lvgl_print_version() {
 }
 
 // Code to run a screen calibration, not needed when calibration values set in setup()
-void touch_calibrate(TFT_eSPI * tftref)
-{
+void touch_calibrate(TFT_eSPI * tftref)  {
 
   TFT_eSPI tft = *tftref; 
   uint16_t calData[5];
@@ -299,7 +289,6 @@ void lv_setup_display(SPIClass* _SPI) {
     lv_indev_set_group(keypadInputDevice, keypadGroup); // Create a new group for the keypad input device
     lv_group_set_default(keypadGroup); // Set the default group for the keypad input device
     log_i("Keypad group created"); // Log the creation of the keypad group
-
 }
 
 lv_group_t* getKeypadGroup() {

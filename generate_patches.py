@@ -48,6 +48,7 @@ def main():
 
     scan_lib("lvgl")
     scan_lib("TFT_eSPI")
+    scan_lib("ESP32-audioI2S")
 
     print("[GEN] Speichere JSON-Liste...")
 

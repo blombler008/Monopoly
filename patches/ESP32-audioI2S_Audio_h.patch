@@ -1,0 +1,11 @@
+--- "patches/original\\ESP32-audioI2S\\Audio.h"	2026-10-27 22:58:34.491507600 +0100
++++ "patches/modified\\ESP32-audioI2S\\Audio.h"	2026-10-27 22:58:38.559823700 +0100
+@@ -280,6 +280,8 @@
+         std::vector<uint32_t> vec2 = {};
+     } msg_t;
+     inline static std::function<void(msg_t i)> audio_info_callback;
++    inline static std::function<void(int32_t* outBuff, int16_t validSamples)> audio_process_raw_samples_cb;
++    inline static std::function<void(int32_t* outBuff,int16_t validSamples,bool* continueI2S)> audio_process_i2s_cb;
+     using VolumeCurveFn = std::function<float(float t)>;
+     // -------------------------------------------------------------------
+     typedef enum : uint32_t { SR_ORIGIN = 0, SR_44100 = 44100, SR_48000 = 48000 } OutputSR_t;
