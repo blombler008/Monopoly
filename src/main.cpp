@@ -150,7 +150,7 @@ void setupMain() {
 #endif
 #if USE_SD
     digitalWrite(SD_STATUS_LED, HIGH); // Turn on the SD status LED to indicate SD card operations 
-    if(SD.begin(SD_CS, *v_spi, num_to_mhz(4))) { // Initialize the SD card on the HSPI bus [4 MHz]
+    if(SD.begin(SD_CS, *v_spi, SD_SPI_SPEED)) { // Initialize the SD card on the VSPI bus [4 MHz]
         is_sd_card_initialized = true; // Set the flag indicating SD card is initialized
         log_i("SD Card initialized successfully!"); // Log success message for SD card initialization
         coreSettings.load();
@@ -158,7 +158,7 @@ void setupMain() {
         rfid_load_tags_from_fs();
 #if USE_AUDIO
         audio_setup(); // Set up the audio system
-        audio_start_loop();  // Start the audio loop for service 
+        audio_start_loop(AUDIO_RUNNING_CORE);  // Start the audio loop for service 
 #endif 
         show_sd_info(); // Show information about the SD card
     } else {

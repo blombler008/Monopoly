@@ -6,13 +6,16 @@ bool isPlaying = false;
 bool killATask = false;
 
 void audioloop(void *) {    
-    while (1) {
-        delayMicroseconds(100); // Allow other tasks to run, adjust as needed
+    while (1) { 
         if(!isPlaying) {
+            vTaskDelay(pdMS_TO_TICKS(10));
             continue;
         }
-        // delay(1); // To ensure the task is watchdog-safe 
+
         audio.loop();
+
+        vTaskDelay(1);
+
         if(killATask) {
             vTaskDelete(NULL);
         }
@@ -56,13 +59,12 @@ void play_beeb_high() {
 }
 
 void audio_info(Audio::msg_t m) {
-    log_i("%s: %s\n", m.s, m.msg);
+    log_i("%s: %s", m.s, m.msg);
 
     switch (m.e) {  // make a switch statement to handle different events in case i need it.
         case Audio::evt_eof:
             audio_playback_stop();
-            audio_mute();
-            audio.loop(); 
+            audio_mute(); 
             break;  
         default:
             break;
@@ -83,8 +85,8 @@ void audio_setup() {
  
 }
 
-void audio_start_loop() {
-    xTaskCreatePinnedToCore(audioloop, "audio", 10000, NULL, 1, NULL, 1);
+void audio_start_loop(int core) {
+    xTaskCreatePinnedToCore(audioloop, "audio", 10000, NULL, 1, NULL, core);
 }
 
 void audio_stop_loop() {

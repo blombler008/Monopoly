@@ -58,9 +58,10 @@
 #define SD_CS       4
 #define SD_DETECT_PIN 2
 #define SD_STATUS_LED 8
-#define SD_SPI_SPEED num_to_mhz(10) // SPI speed for SD card communication (10 MHz)
+#define SD_SPI_SPEED num_to_mhz(20) // SPI speed for SD card communication (10 MHz)
 
 // Audio Settings
+#define AUDIO_RUNNING_CORE 0 
 #define I2S_MUTE    42
 #define I2S_DOUT    40
 #define I2S_BCLK    39

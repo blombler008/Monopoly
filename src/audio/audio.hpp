@@ -57,7 +57,7 @@ void audio_setup();
  *
  * @note Ensure that the `audioloop` function is defined elsewhere in your code.
  */
-void audio_start_loop();
+void audio_start_loop(int core = 0);
 
 /**
  * @brief Stops the audio loop task.
