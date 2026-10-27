@@ -7,19 +7,15 @@ bool killATask = false;
 
 void audioloop(void *) {    
     while (1) { 
+        if(killATask) vTaskDelete(NULL);
+        
         if(!isPlaying) {
             vTaskDelay(pdMS_TO_TICKS(10));
             continue;
         }
 
         audio.loop();
-
         vTaskDelay(1);
-
-        if(killATask) {
-            vTaskDelete(NULL);
-        }
-       
     } 
 }
 
@@ -50,7 +46,7 @@ void play_beeb_single() {
     //audio_playback_start("/audio/beep.mp3"); 
 }
 void play_beeb_fast() {
-    audio.loop();
+    // audio.loop();
     //audio_playback_start("/audio/beep.mp3"); 
 }
 void play_beeb_high() {
