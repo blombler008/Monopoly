@@ -57,7 +57,9 @@ void synth_beep(WaveShape shape, float frequency, uint32_t durationMs, float vol
     g_voice.frequency = frequency;
     g_voice.volume = volume;
 
-    g_voice.phase = 0.0f;
+    // g_voice.phase = 0.0f;
+
+    g_voice.durationMs = durationMs;
 
     g_voice.remainingSamples = static_cast<uint32_t>((durationMs * SAMPLE_RATE)/ 1000.0f);
 }

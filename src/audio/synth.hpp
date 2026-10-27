@@ -15,6 +15,8 @@ struct SynthVoice {
 
     float phase = 0.0f;
 
+    uint32_t durationMs = 0;
+
     uint32_t remainingSamples = 0;
 };
 
