@@ -69,6 +69,7 @@ SPIClass* h_spi = new SPIClass(HSPI);
  *       before initializing it to avoid conflicts.
  */
 SPIClass* v_spi = new SPIClass(VSPI); 
+static bool s_sdAvailable = false;  // Flag to check if the SD card is ready to use
 
 void make_bargraph(int numChars, float usedPercentage, char* label) {
     int num_hashes = static_cast<int>(usedPercentage / 2); 
@@ -78,41 +79,75 @@ void make_bargraph(int numChars, float usedPercentage, char* label) {
     strcpy(label, bar.c_str()); 
 }
 
-void show_sd_info() {
+void show_sd_info(bool more = true) {
+    #define GB_MULTIPLIER (1024.0 * 1024.0 * 1024.0)
     log_i("SD Card Type: %s", SD.cardType() == CARD_SDHC ? "SDHC" : "SD");
-    log_i("SD Card Size: %llu bytes", SD.cardSize());
-    log_i("SD Card Sectors: %zu", SD.numSectors());
-    log_i("SD Card Sector Size: %zu bytes", SD.sectorSize());
-    log_i("SD Card Total Bytes: %llu", SD.totalBytes());
-    log_i("SD Card Used Bytes: %llu", SD.usedBytes());
-    log_i("SD Card Free Bytes: %llu", SD.totalBytes() - SD.usedBytes());
-    log_i("SD Card Used/Total GB: %.2f/%.2f", SD.usedBytes() / (1024.0 * 1024.0 * 1024.0), SD.totalBytes() / (1024.0 * 1024.0 * 1024.0));
+    if(more) { 
+        log_i("SD Card Size: %llu bytes", SD.cardSize());
+        log_i("SD Card Sectors: %zu", SD.numSectors());
+        log_i("SD Card Sector Size: %zu bytes", SD.sectorSize());
+        log_i("SD Card Total Bytes: %llu", SD.totalBytes());
+        log_i("SD Card Used Bytes: %llu", SD.usedBytes());
+        log_i("SD Card Free Bytes: %llu", SD.totalBytes() - SD.usedBytes());
+    }
+    log_i("SD Card Used/Total GB: %.2f/%.2f", SD.usedBytes() / GB_MULTIPLIER, SD.totalBytes() / GB_MULTIPLIER);
     // Show used / total GB of the SD card as filling Bargraph from left to right ((SD.usedBytes() / SD.totalBytes()) * 100)
     // Like a progress bar, like this: [##########          ] 50%
     // width of the bar should be 40 characters
-    float usedGB = SD.usedBytes() / (1024.0 * 1024.0 * 1024.0); // Convert used bytes to GB
-    float totalGB = SD.totalBytes() / (1024.0 * 1024.0 * 1024.0); // Convert total bytes to GB
+    float usedGB = SD.usedBytes() / GB_MULTIPLIER; // Convert used bytes to GB
+    float totalGB = SD.totalBytes() / GB_MULTIPLIER; // Convert total bytes to GB
     float usedPercentage = (usedGB / totalGB) * 100.0; // Calculate the percentage of used space 
     char label[31]; // Create a label for the bar graph, 80 characters + null terminator
     make_bargraph(30, usedPercentage, (char*)label); // Create a bar graph string with 80 characters width
     label[30] = '\0'; // Ensure the label is null-terminated
     log_i("SD Card Used/Total GB: [%s] %.2f%%", label, usedPercentage); // Log the used percentage as a bar graph
-
-    log_i("SD contents:"); // Log the contents of the SDSS file system
-    File root = SD.open("/"); // Open the root directory of SDFS
-    if (root) {
-        File file = root.openNextFile(); // Open the next file in the directory
-        while (file) { // While there are files in the directory
-            log_i("File: %s, Size: %d bytes", file.name(), file.size()); // Log the file name and size
-            file = root.openNextFile(); // Move to the next file
+    if(more) { 
+        log_i("SD contents:"); // Log the contents of the SDSS file system
+        File root = SD.open("/"); // Open the root directory of SDFS
+        if (root) {
+            File file = root.openNextFile(); // Open the next file in the directory
+            while (file) { // While there are files in the directory
+                log_i("File: %s, Size: %d bytes", file.name(), file.size()); // Log the file name and size
+                file = root.openNextFile(); // Move to the next file
+            }
+            root.close(); // Close the root directory
+        } else {
+            log_i("Failed to open SD root directory"); // Log failure to open root directory
         }
-        root.close(); // Close the root directory
-    } else {
-        log_i("Failed to open SD root directory"); // Log failure to open root directory
     }
 }
+
+bool sd_detect() {
+    return digitalRead(SD_DETECT_PIN) == LOW;
+}
+
+void sd_update() {
+    bool cardPresent = sd_detect();
+
+    if (cardPresent == s_sdAvailable) return;
+
+    if (cardPresent) {
+
+        if (!SD.begin(SD_CS, *v_spi, SD_SPI_SPEED)) {
+            log_e("Failed to initialize SD card");
+            return;
+        }
+
+        show_sd_info(false);
+
+        s_sdAvailable = true;
+
+        fire_event(EventId::SDCardDetected);
+        return;
+    }
+
+    SD.end();
+
+    s_sdAvailable = false;
+
+    fire_event(EventId::SDCardRemoved);
+}
    
-bool is_sd_card_initialized = false; // Flag to check if the SD card is initialized
 void setupMain() {  
     v_spi->begin(VSPI_SCK, VSPI_MISO, VSPI_MOSI); // Initialize the VSPI bus
     h_spi->begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI); // Initialize the HSPI bus 
@@ -130,6 +165,7 @@ void setupMain() {
     }
     
     xSemaphoreGive(spi_semaphore); // initial freigeben
+
 #if USE_DISPLAY
     lv_setup_display(h_spi); // Initialize the display using LittlevGL   
     log_i("Display setup complete"); // Log the completion of the display setup
@@ -137,8 +173,10 @@ void setupMain() {
     log_i("GUI created"); // Log the creation of the GUI
     // lv_start_loop(); // Start the LittlevGL loop
 #endif
+
 #if USE_RFID
     rfid_setup(h_spi); // Set up the RFID readers
+    register_rfid_events();
     log_i("RFID setup complete"); // Log the completion of the RFID setup
 #endif
 
@@ -148,24 +186,29 @@ void setupMain() {
     keypad_setup(); // Initialize the keypad with the specified layout and address
     log_i("Keypad initialized with address: 0x%02X", KEYPAD_I2C); // Log the I2C address of the keypad
 #endif
+
 #if USE_SD
     digitalWrite(SD_STATUS_LED, HIGH); // Turn on the SD status LED to indicate SD card operations 
-    if(SD.begin(SD_CS, *v_spi, SD_SPI_SPEED)) { // Initialize the SD card on the VSPI bus [4 MHz]
-        is_sd_card_initialized = true; // Set the flag indicating SD card is initialized
-        log_i("SD Card initialized successfully!"); // Log success message for SD card initialization
-        coreSettings.load();
-            
-        rfid_load_tags_from_fs();
+    s_sdAvailable = sd_detect();
+    if(s_sdAvailable){
+        if(SD.begin(SD_CS, *v_spi, SD_SPI_SPEED)) { // Initialize the SD card on the VSPI bus [4 MHz] 
+            log_i("SD Card initialized successfully!"); // Log success message for SD card initialization
+            coreSettings.load();
+                
+            s_sdAvailable = true; // Set the flag indicating SD card is initialized
+            fire_event(EventId::SDCardDetected); 
 #if USE_AUDIO
-        audio_setup(); // Set up the audio system
-        audio_start_loop(AUDIO_RUNNING_CORE);  // Start the audio loop for service 
+            audio_setup(); // Set up the audio system
+            audio_start_loop(AUDIO_RUNNING_CORE);  // Start the audio loop for service 
 #endif 
-        show_sd_info(); // Show information about the SD card
-    } else {
-        log_e("SD Card initialization failed!"); // Log an error if SD card initialization fails
-        digitalWrite(SD_STATUS_LED, LOW); // Turn off the SD status LED to indicate failure
-    } 
+            show_sd_info(); // Show information about the SD card
+        } else {
+            log_e("SD Card initialization failed!"); // Log an error if SD card initialization fails
+            digitalWrite(SD_STATUS_LED, LOW); // Turn off the SD status LED to indicate failure
+        } 
+    }
 #endif  
+
     log_i("Starting loop"); 
 } 
   
@@ -186,7 +229,7 @@ void toggle_led() {
 
     static bool lastState = false;
 
-    if (!is_sd_card_initialized) {
+    if (!s_sdAvailable) {
         if (lastState) {
             digitalWrite(SD_STATUS_LED, LOW);
             lastState = false;
@@ -209,12 +252,12 @@ void toggle_led() {
 void loop() { 
     // log_d("Loop begin");
     uint32_t now = esp_timer_get_time() / 1000; // Get the current time in milliseconds
-    static uint32_t last_gui = 0;
+    static uint32_t last_sd = 0;
     static uint32_t last_rfid = 0;
     static uint32_t last_led = 0;
     static uint32_t last_loop = 0;
 
-#if USE_DISPLAY   
+#if USE_DISPLAY   // why is this in here? have to test // TODO:
     lv_timer_handler(); // Call the LittlevGL timer handler to update the display and handle events  
 #endif
 
@@ -226,6 +269,13 @@ void loop() {
     }
  
 #endif 
+
+#if USE_SD 
+    if (now - last_sd >= 100) {
+        last_sd = now; 
+        sd_update();
+    }
+#endif
 
     last_led = now;
     toggle_led();

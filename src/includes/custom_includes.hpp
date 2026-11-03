@@ -17,5 +17,7 @@
 
 // GAME LOGIC
 #include <core/Settings.h>
+#include <core/event_manager.hpp>
+#include <core/event_subscriptions.hpp>
 
 #endif
