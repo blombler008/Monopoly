@@ -1,6 +1,5 @@
 #include "audio.hpp"
-#include "synth.hpp"
-
+#include "synth.hpp"  
 Audio audio;
 
 bool isPlaying = false;
@@ -61,9 +60,9 @@ void audio_info(Audio::msg_t m) {
             break;
     }
 }
-
-void audio_setup() {
  
+
+void audio_setup() { 
     Audio::audio_info_callback = audio_info;
     pinMode(I2S_MUTE, OUTPUT); 
     audio_mute();
@@ -74,7 +73,6 @@ void audio_setup() {
     audio_mute();
     
     synth_init();
-    log_i("Audio Driver initialized");
  
 }
 

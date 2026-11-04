@@ -9,6 +9,7 @@ void serial_register_builtin_commands() {
     register_sd_commands();
     register_event_commands();
     register_esp_commands();
+    register_audio_commands();
 }
 
 void serial_register_command(const SerialCommand* command) {
@@ -18,8 +19,7 @@ void serial_register_command(const SerialCommand* command) {
 }
 
 bool serial_execute_command(const char* root, const char* args) {
-    log_i("%s> %s", root, args);
-
+    log_i("> %s %s", root, args);
     if (strcmp("help", root) == 0) return serial_dump_help(args);
 
     for (uint8_t i = 0;i < s_commandCount;i++) {
@@ -63,6 +63,5 @@ bool serial_dump_help(const char* command) {
         return true;
     }
 
-    log_w("Unknown command: %s", command);
     return false;
 }

@@ -29,25 +29,17 @@ static uint16_t get_subscription_count(EventId eventId) {
     return count;
 }
 
-const char* event_to_string(EventId id) {
-#define EVENT_CASE(event) case EventId::event: return #event
+const char* event_to_string(EventId id) { 
     switch (id) {
-        EVENT_CASE(UiAddPlayer);
-        EVENT_CASE(UiRemovePlayer);
-        EVENT_CASE(UiStartGame);
-        EVENT_CASE(RfidCardDetected);
-        EVENT_CASE(RfidCardRemoved);
-        EVENT_CASE(PlayerAdded);
-        EVENT_CASE(PlayerRemoved);
-        EVENT_CASE(GameStarted);
-        EVENT_CASE(GameEnded);
-        EVENT_CASE(SDCardDetected);
-        EVENT_CASE(SDCardRemoved);
-        EVENT_CASE(AudioBeepRequested);
+#define GENERATE_CASE(name) \
+        case EventId::name: return #name;
+
+        EVENT_LIST(GENERATE_CASE)
+
+#undef GENERATE_CASE
         default:
             return "Unknown";
-    }
-#undef EVENT_CASE
+    } 
 }
 
 void event_manager_init() {

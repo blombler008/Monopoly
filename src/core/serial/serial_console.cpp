@@ -28,27 +28,79 @@ static void dispatch_command(const char* command) {
         "%31s %95[^\n]",
         root,
         args);
-    
-    serial_execute_command(root, args); 
+     
+    bool res = serial_execute_command(root, args); 
+    if(!res)  
+        log_w("Unknown command: %s", command);
 }
-
 
 void serial_console_update() {
     while (Serial.available()) {
         char c = Serial.read();
 
-        if (c == '\r') continue;
+        if (c == '\r')
+            continue;
 
-        if (c != '\n') {
-            if (s_bufferPos < sizeof(s_buffer) - 1) s_buffer[s_bufferPos++] = c;
+        if (c == '\b' || c == 0x7F) {
+            if (s_bufferPos > 0) {
+                --s_bufferPos;
+                s_buffer[s_bufferPos] = '\0';
+            }
+
             continue;
         }
 
-        s_buffer[s_bufferPos] = '\0';
+        if (c == 0x1B) {
+            while (Serial.available()) {
+                char next = Serial.read();
 
-        if (s_bufferPos > 0) dispatch_command(s_buffer);
-        
-        s_bufferPos = 0;
-        s_buffer[0] = '\0';
+                if ((next >= 'A' && next <= 'Z') ||
+                    (next >= 'a' && next <= 'z'))
+                {
+                    break;
+                }
+            }
+
+            continue;
+        }
+
+        if (c == '\n') {
+            s_buffer[s_bufferPos] = '\0';
+
+            char* command = s_buffer;
+
+            while (*command == ' ')
+                ++command;
+
+            char* end = command + strlen(command);
+
+            while (end > command &&
+                   *(end - 1) == ' ')
+            {
+                --end;
+            }
+
+            *end = '\0';
+
+            if (*command != '\0')
+                dispatch_command(command);
+
+            s_bufferPos = 0;
+            memset(
+                s_buffer,
+                0,
+                sizeof(s_buffer));
+
+            continue;
+        }
+
+        if ((uint8_t)c < 32)
+            continue;
+
+        if (s_bufferPos >= sizeof(s_buffer) - 1)
+            continue;
+
+        s_buffer[s_bufferPos++] = c;
+        s_buffer[s_bufferPos] = '\0';
     }
-} 
+}

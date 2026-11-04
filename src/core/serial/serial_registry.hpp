@@ -6,6 +6,7 @@
 #include "serial_commands_esp.hpp"
 #include "serial_commands_event.hpp"
 #include "serial_commands_sd.hpp"
+#include "serial_commands_audio.hpp"
 
 void serial_register_command(const SerialCommand* command);
 void serial_register_builtin_commands();

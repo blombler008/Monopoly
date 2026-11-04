@@ -9,7 +9,7 @@
 #include <helpers/helpers.hpp>
 #include <includes/includes.hpp> 
 
-enum class WaveShape {
+enum class WaveShape : uint8_t {
     Sine,
     Square,
     Triangle,

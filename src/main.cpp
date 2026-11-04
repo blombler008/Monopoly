@@ -71,52 +71,6 @@ SPIClass* h_spi = new SPIClass(HSPI);
 SPIClass* v_spi = new SPIClass(VSPI); 
 static bool s_sdAvailable = false;  // Flag to check if the SD card is ready to use
 
-void make_bargraph(int numChars, float usedPercentage, char* label) {
-    int num_hashes = static_cast<int>(usedPercentage / 2); 
-    num_hashes = std::min(num_hashes, numChars);  
-    std::string bar(num_hashes, '#'); 
-    bar.append(numChars - num_hashes, ' ');  
-    strcpy(label, bar.c_str()); 
-}
-
-void show_sd_info(bool more = true) {
-    #define GB_MULTIPLIER (1024.0 * 1024.0 * 1024.0)
-    log_i("SD Card Type: %s", SD.cardType() == CARD_SDHC ? "SDHC" : "SD");
-    if(more) { 
-        log_i("SD Card Size: %llu bytes", SD.cardSize());
-        log_i("SD Card Sectors: %zu", SD.numSectors());
-        log_i("SD Card Sector Size: %zu bytes", SD.sectorSize());
-        log_i("SD Card Total Bytes: %llu", SD.totalBytes());
-        log_i("SD Card Used Bytes: %llu", SD.usedBytes());
-        log_i("SD Card Free Bytes: %llu", SD.totalBytes() - SD.usedBytes());
-    }
-    log_i("SD Card Used/Total GB: %.2f/%.2f", SD.usedBytes() / GB_MULTIPLIER, SD.totalBytes() / GB_MULTIPLIER);
-    // Show used / total GB of the SD card as filling Bargraph from left to right ((SD.usedBytes() / SD.totalBytes()) * 100)
-    // Like a progress bar, like this: [##########          ] 50%
-    // width of the bar should be 40 characters
-    float usedGB = SD.usedBytes() / GB_MULTIPLIER; // Convert used bytes to GB
-    float totalGB = SD.totalBytes() / GB_MULTIPLIER; // Convert total bytes to GB
-    float usedPercentage = (usedGB / totalGB) * 100.0; // Calculate the percentage of used space 
-    char label[31]; // Create a label for the bar graph, 80 characters + null terminator
-    make_bargraph(30, usedPercentage, (char*)label); // Create a bar graph string with 80 characters width
-    label[30] = '\0'; // Ensure the label is null-terminated
-    log_i("SD Card Used/Total GB: [%s] %.2f%%", label, usedPercentage); // Log the used percentage as a bar graph
-    if(more) { 
-        log_i("SD contents:"); // Log the contents of the SDSS file system
-        File root = SD.open("/"); // Open the root directory of SDFS
-        if (root) {
-            File file = root.openNextFile(); // Open the next file in the directory
-            while (file) { // While there are files in the directory
-                log_i("File: %s, Size: %d bytes", file.name(), file.size()); // Log the file name and size
-                file = root.openNextFile(); // Move to the next file
-            }
-            root.close(); // Close the root directory
-        } else {
-            log_i("Failed to open SD root directory"); // Log failure to open root directory
-        }
-    }
-}
-
 bool sd_detect() { 
     return digitalRead(SD_DETECT_PIN) == HIGH;
 }
@@ -147,7 +101,12 @@ void sd_update() {
 
     fire_event(EventId::SDCardRemoved);
 }
-   
+
+void create_gui() {
+    lv_create_start_gui(); // Create the initial graphical user interface
+    log_i("GUI created"); // Log the creation of the GUI
+}
+
 void setupMain() {  
     v_spi->begin(VSPI_SCK, VSPI_MISO, VSPI_MOSI); // Initialize the VSPI bus
     h_spi->begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI); // Initialize the HSPI bus 
@@ -169,9 +128,6 @@ void setupMain() {
 #if USE_DISPLAY
     lv_setup_display(h_spi); // Initialize the display using LittlevGL   
     log_i("Display setup complete"); // Log the completion of the display setup
-    lv_create_start_gui(); // Create the initial graphical user interface
-    log_i("GUI created"); // Log the creation of the GUI
-    // lv_start_loop(); // Start the LittlevGL loop
 #endif
 
 #if USE_RFID
@@ -197,10 +153,7 @@ void setupMain() {
                 
             s_sdAvailable = true; // Set the flag indicating SD card is initialized
             fire_event(EventId::SDCardDetected); 
-#if USE_AUDIO
-            audio_setup(); // Set up the audio system
-            audio_start_loop(AUDIO_RUNNING_CORE);  // Start the audio loop for service 
-#endif 
+
             show_sd_info(); // Show information about the SD card
         } else {
             log_e("SD Card initialization failed!"); // Log an error if SD card initialization fails
@@ -208,6 +161,13 @@ void setupMain() {
         } 
     }
 #endif  
+
+#if USE_AUDIO
+    audio_setup(); // Set up the audio system
+    register_audio_events();
+    audio_start_loop(AUDIO_RUNNING_CORE);  // Start the audio loop for service 
+    log_i("Audio Driver initialized");
+#endif 
 
     log_i("Starting loop"); 
 } 
@@ -222,6 +182,8 @@ void setup() {
 
     serial_register_builtin_commands();
     serial_console_setup();
+
+    create_gui();
 }
 
 #if tests == 0
