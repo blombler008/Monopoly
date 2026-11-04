@@ -220,6 +220,7 @@ void setup() {
  
     setupMain(); 
 
+    serial_register_builtin_commands();
     serial_console_setup();
 }
 

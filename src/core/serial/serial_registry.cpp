@@ -18,10 +18,13 @@ void serial_register_command(const SerialCommand* command) {
 }
 
 bool serial_execute_command(const char* root, const char* args) {
-    for (uint8_t i = 0;i < s_commandCount;i++) {
-        const SerialCommand* cmd = s_commands[i];
+    log_i("%s> %s", root, args);
 
-        if (strcmp("help", root) == 0) return serial_dump_help(args);
+    if (strcmp("help", root) == 0) return serial_dump_help(args);
+
+    for (uint8_t i = 0;i < s_commandCount;i++) {
+        const SerialCommand* cmd = s_commands[i];  
+
         if (strcmp(cmd->command, root) != 0) continue;
         
         return cmd->handler(args);

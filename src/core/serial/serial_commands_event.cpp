@@ -20,7 +20,7 @@ static void serial_event_help() {
     log_i("");
     log_i("EVENT commands:");
     log_i("");
-    log_i("event dump");
+    log_i("events dump");
     log_i("");
 }
 

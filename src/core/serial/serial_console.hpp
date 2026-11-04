@@ -5,6 +5,7 @@
 
 #include "../event/event_manager.hpp"
 #include "../event/event_ids.hpp"
+#include "serial_registry.hpp"
 void serial_console_setup();
 void serial_console_update();
 
