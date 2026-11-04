@@ -1,82 +1,154 @@
 from os.path import join, isfile
-from os import walk
 import json
-import shutil
+
 Import("env")  # type: ignore
 
 PATCH_ROOT = "patches"
-MODIFIED_ROOT = "patches/modified"
-PATCH_JSON = join(PATCH_ROOT, "patched_files.json")
 
-# Windows-kompatibler Patch-Befehl
-PATCH_CMD = '"C:/Program Files/Git/usr/bin/patch.exe"'  # unter Linux einfach "patch"
+PATCH_JSON = join(
+    PATCH_ROOT,
+    "patched_files.json"
+)
 
-def find_file_recursive(root, filename):
-    for dirpath, _, files in walk(root):
-        if filename in files:
-            return join(dirpath, filename)
-    return None
-
-def ensure_file_exists(pkg_dir, libname, filename):
-    modified_path = join(MODIFIED_ROOT, libname, filename)
-    if not isfile(modified_path):
-        print(f"[PATCH] Missing modified file: {modified_path}")
-        return None
-
-    target = find_file_recursive(pkg_dir, filename)
-    if target:
-        return target
-
-    print(f"[PATCH] Creating missing file: {filename}")
-    target = join(pkg_dir, filename)
-    shutil.copyfile(modified_path, target)
-    return target
+PATCH_CMD = (
+    '"C:/Program Files/Git/usr/bin/patch.exe"'
+)
+GIT_CMD = (
+    '"C:/Program Files/Git/bin/git.exe"'
+)
 
 def apply_patch(entry):
     libname = entry["lib"]
     filename = entry["file"]
+    relpath = entry["path"]
     patchfile = entry["patch"]
 
-    print(f"[PATCH] Preparing to apply {patchfile} to {libname}/{filename}")
+    print(
+        f"[PATCH] Preparing to apply "
+        f"{patchfile} to "
+        f"{libname}/{relpath}"
+    )
 
-    # Library-Pfad korrekt bestimmen
-    lib_root = join(env.GetProjectOption("libdeps_dir", ".pio/libdeps"), env["PIOENV"]) # type: ignore
-    pkg_dir = join(lib_root, libname)
+    lib_root = join(
+        env.GetProjectOption(
+            "libdeps_dir",
+            ".pio/libdeps"
+        ),
+        env["PIOENV"]
+    )
 
-    if not pkg_dir or not isfile(join(PATCH_ROOT, patchfile)):
-        print(f"[PATCH] Missing patch or library folder for {patchfile}")
-        return
+    pkg_dir = join(
+        lib_root,
+        libname
+    )
 
-    flag = join(pkg_dir, f".patched_{filename}")
+    patch_path = join(
+        PATCH_ROOT,
+        patchfile
+    )
+
+    target = join(
+        pkg_dir,
+        *relpath.split("/")
+    )
+
+    if not isfile(patch_path): 
+    
+        print(
+            f"[PATCH] Creating "
+            f"{target}"
+        )
+
+        os.makedirs(
+            os.path.dirname(target),
+            exist_ok=True
+        )
+
+        with open(
+            target,
+            "w",
+            encoding="utf-8"
+        ):
+            pass
+
+    flag_name = (
+        relpath
+        .replace("/", "_")
+        .replace("\\", "_")
+        .replace(".", "_")
+    )
+
+    flag = join(
+        pkg_dir,
+        f".patched_{flag_name}"
+    )
+
     if isfile(flag):
-        print(f"[PATCH] Already patched: {filename}")
+        print(
+            f"[PATCH] Already patched: "
+            f"{relpath}"
+        )
         return
 
-    patch_path = join(PATCH_ROOT, patchfile)
-    target = ensure_file_exists(pkg_dir, libname, filename)
+    print(
+        f"[PATCH] Applying "
+        f"{patchfile} to "
+        f"{target}"
+    )
 
-    if not target:
-        print(f"[PATCH] Could not create or find {filename}")
-        return
+    # using: this instaed of the other one@ 
+    # cmd = (
+    #     f'{GIT_CMD} '
+    #     f'apply '
+    #     f'--ignore-space-change '
+    #     f'--ignore-whitespace '
+    #     f'"{patch_path}"'
+    # )
 
-    print(f"[PATCH] Applying {patchfile} to {target}")
+    cmd = (
+        f'{PATCH_CMD} '
+        f'--binary '
+        f'--force '
+        f'"{target}" '
+        f'"{patch_path}"'
+    )
 
-    # Non-interactive patch (keine Eingabe nötig)
-    cmd = f'{PATCH_CMD} --force "{target}" "{patch_path}"'
-    env.Execute(cmd)  # type: ignore
+    result = env.Execute(cmd)  # type: ignore
 
-    with open(flag, "w") as f:
-        f.write("patched")
+    if result == 0:
+        with open(flag, "w") as f:
+            f.write("patched")
+
 
 def main():
-    print("[PATCH] Loading patch list...")
-    with open(PATCH_JSON, "r") as f:
+    print(
+        "[PATCH] Loading patch list..."
+    )
+
+    if not isfile(PATCH_JSON):
+        print(
+            f"[PATCH] Missing "
+            f"{PATCH_JSON}"
+        )
+        return
+
+    with open(
+        PATCH_JSON,
+        "r",
+        encoding="utf-8"
+    ) as f:
         patch_list = json.load(f)
 
-    print("[PATCH] Applying patches...")
+    print(
+        "[PATCH] Applying patches..."
+    )
+
     for entry in patch_list:
         apply_patch(entry)
 
-    print("[PATCH] Done.")
+    print(
+        "[PATCH] Done."
+    )
+
 
 main()

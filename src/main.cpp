@@ -117,8 +117,8 @@ void show_sd_info(bool more = true) {
     }
 }
 
-bool sd_detect() {
-    return digitalRead(SD_DETECT_PIN) == LOW;
+bool sd_detect() { 
+    return digitalRead(SD_DETECT_PIN) == HIGH;
 }
 
 void sd_update() {
@@ -219,6 +219,8 @@ void setup() {
     log_i("Starting, CPU Frequency was: %lu MHz", oldCpuFreq); // Log the start of the setup process
  
     setupMain(); 
+
+    serial_console_setup();
 }
 
 #if tests == 0
@@ -256,6 +258,8 @@ void loop() {
     static uint32_t last_rfid = 0;
     static uint32_t last_led = 0;
     static uint32_t last_loop = 0;
+
+    serial_console_update();
 
 #if USE_DISPLAY   // why is this in here? have to test // TODO:
     lv_timer_handler(); // Call the LittlevGL timer handler to update the display and handle events  

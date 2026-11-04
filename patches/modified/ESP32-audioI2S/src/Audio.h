@@ -6,8 +6,10 @@
 #pragma once
 #pragma GCC optimize("Ofast")
 #include "audiolib_structs.hpp"
+#include "buffers.hpp"
 #include "esp_arduino_version.h"
 #include "esp_dsp.h"
+#include "peripherial/bluetooth.h"
 #include "psram_unique_ptr.hpp"
 #include <Arduino.h>
 #include <FFat.h>
@@ -42,196 +44,42 @@ class Decoder; // prototype
 
 //----------------------------------------------------------------------------------------------------------------------
 
-//  The reserve area contains a copy of the first bytes of the main buffer.
-//  Therefore every decoder always receives one contiguous memory block, even if the read position crosses the end of the main buffer.
-//
-//  Only one memcpy() is required during wrap-around.
-//
-//  Writer:
-//      WiFi / SD
-//
-//  Reader:
-//      Audio decoder
-//
-//  Reader and writer may work simultaneously.
-// ——————————————————————————————————————————————————————————————————————————————
-
-class AudioBuffer {
-#define ANSI_ESC_RED   "\033[31m"
-#define ANSI_ESC_RESET "\033[0m"
-  public:
-    // ------------------------------------------------------------
-    // Configuration
-    // ------------------------------------------------------------
-
-    static constexpr size_t DEFAULT_MAIN_BUFFER_SIZE = UINT16_MAX * 10;
-    static constexpr size_t DEFAULT_RESERVE_BUFFER_SIZE = UINT16_MAX;
-    // Maximum contiguous block returned by readSpace()/writeSpace().
-    // All supported decoders use uint16_t (bytesLeft, bytesAvail, ...). Returning larger blocks has no benefit and would only increase decoder latency.
-    static constexpr size_t MAX_TRANSFER_SIZE = UINT16_MAX;
-
-    // ------------------------------------------------------------
-    // Construction
-    // ------------------------------------------------------------
-
-    AudioBuffer();
-    AudioBuffer(size_t mainSize, size_t reserveSize);
-
-    ~AudioBuffer();
-
-    // ------------------------------------------------------------
-    // Initialization
-    // ------------------------------------------------------------
-
-    size_t init();
-    bool   isInitialized() const { return m_initialized; }
-    void   reset();
-
-    // ------------------------------------------------------------
-    // Configuration
-    // ------------------------------------------------------------
-
-    void   setMaxBlocksize(size_t size);
-    size_t getMaxBlockSize() const;
-    size_t getBufsize() const;
-
-    // ------------------------------------------------------------
-    // Buffer information
-    // ------------------------------------------------------------
-
-    size_t bufferFilled();
-    size_t freeSpace();
-    size_t readSpace();
-    size_t writeSpace();
-
-    // ------------------------------------------------------------
-    // Pointer access
-    // ------------------------------------------------------------
-
-    uint8_t* getReadPtr() { return m_readPtr; }   // Pointer remains valid until the next call to bytesWasRead() or reset().
-    uint8_t* getWritePtr() { return m_writePtr; } // Pointer remains valid until the next call to bytesWritten() or reset().
-
-    // ------------------------------------------------------------
-    // Update pointers
-    // ------------------------------------------------------------
-
-    void bytesWritten(size_t bytes);
-    void bytesWasRead(size_t bytes);
-
-    // ------------------------------------------------------------
-    // Debug
-    // ------------------------------------------------------------
-
-    void showStatus();
-
-  protected:
-    //-------------------------------------------------------------
-    // Buffer configuration
-    //-------------------------------------------------------------
-
-    size_t m_mainSize;
-    size_t m_reserveSize;
-    size_t m_totalSize;
-    size_t m_maxBlockSize = 0;
-    size_t m_readSpace = 0;
-    size_t m_writeSpace = 0;
-
-    //-------------------------------------------------------------
-    // Memory
-    //-------------------------------------------------------------
-
-    ps_ptr<uint8_t> m_buffer;
-
-    //-------------------------------------------------------------
-    // Pointer layout
-    //-------------------------------------------------------------
-
-    uint8_t* m_bufferBegin = nullptr;
-    uint8_t* m_mainEnd = nullptr;
-    uint8_t* m_bufferEnd = nullptr;
-    uint8_t* m_readPtr = nullptr;
-    uint8_t* m_writePtr = nullptr;
-
-    //-------------------------------------------------------------
-    // State
-    //-------------------------------------------------------------
-
-    bool m_initialized = false;
-    bool m_isEmpty = true;
-    bool m_isFull = false;
-
-    //-------------------------------------------------------------
-    // Debug
-    //-------------------------------------------------------------
-
-    ps_ptr<char> m_log;
-
-    //-------------------------------------------------------------
-    // Synchronisation
-    //-------------------------------------------------------------
-
-    SemaphoreHandle_t m_mutex = nullptr;
-
-  private:
-    //-------------------------------------------------------------
-    // Internal helper
-    //-------------------------------------------------------------
-    void sanityCheck();
-};
-
-//----------------------------------------------------------------------------------------------------------------------
-
-class RingBuffer {
-
-  public:
-    RingBuffer();
-    ~RingBuffer();
-
-    void          setBufsize(size_t size);
-    size_t        getBufsize() const;
-    size_t        init();
-    bool          isInitialized() { return m_init; };
-    void          clear();
-    void          reset();
-    size_t        freeSpace() const;
-    size_t        bufferFilled() const;
-    size_t        writeSpace() const;
-    size_t        readSpace() const;
-    int32_t*      getWritePtr();
-    int32_t*      getReadPtr();
-    bool          bytesWritten(size_t bytes);
-    bool          bytesRead(size_t bytes);
-    size_t        write(const int32_t* src, size_t words);
-    size_t        read(int32_t* dst, size_t words);
-    size_t        peek(int32_t* dst, size_t words);
-    inline size_t advanceIndex(size_t index, size_t words) const;
-    void          showStatus();
-
-  private:
-    ps_ptr<int32_t>      m_buffer;
-    size_t               m_bufSize = 0;
-    size_t               m_readIndex = 0;
-    size_t               m_writeIndex = 0;
-    size_t               m_used = 0;
-    bool                 m_init = false;
-    mutable ps_ptr<char> m_log;
-};
-
-//----------------------------------------------------------------------------------------------------------------------
-
 class Audio {
   private:
     AudioBuffer InBuff; // instance of input buffer
     RingBuffer  SamplesBuff;
+    BT_Source   bt_source;
 
   public:
     Audio(uint8_t i2sPort = I2S_NUM_0);
     ~Audio();
     std::mutex mutex_info; // mutex_info as member
+
     i2s_chan_handle_t getI2SHandle() {
         return m_i2s_tx_handle;
     };
-    // callbacks ---------------------------------------------------------
+    
+    // Audio event type descriptions
+    static constexpr std::array<const char*, 17> eventStr = {
+        "info",            // evt_info
+        "id3data",         // evt_id3data
+        "eof",             // evt_eof
+        "station_name",    // evt_name
+        "icy_description", // evt_icydescription
+        "streamtitle",     // evt_streamtitle
+        "bitrate (b/s)",   // evt_bitrate
+        "icy_url",         // evt_icyurl
+        "icy_logo",        // evt_icylogo
+        "genre",           // evt_genre
+        "lasthost",        // evt_lasthost
+        "cover_image",     // evt_image
+        "lyrics",          // evt_lyrics
+        "log",             // evt_log
+        "VU",              // evt_vu
+        "BANDS",           // evt_spectrum
+        "BT",              // evt_bt
+    };
+
     typedef enum {
         evt_info = 0,
         evt_id3data,
@@ -249,27 +97,8 @@ class Audio {
         evt_log,
         evt_vu,
         evt_spectrum,
+        evt_bt,
     } event_t;
-
-    // Audio event type descriptions
-    static constexpr std::array<const char*, 16> eventStr = {
-        "info",            // evt_info
-        "id3data",         // evt_id3data
-        "eof",             // evt_eof
-        "station_name",    // evt_name
-        "icy_description", // evt_icydescription
-        "streamtitle",     // evt_streamtitle
-        "bitrate (b/s)",   // evt_bitrate
-        "icy_url",         // evt_icyurl
-        "icy_logo",        // evt_icylogo
-        "genre",           // evt_genre
-        "lasthost",        // evt_lasthost
-        "cover_image",     // evt_image
-        "lyrics",          // evt_lyrics
-        "log",             // evt_log
-        "VU",              // evt_vu
-        "BANDS",           // evt_spectrum
-    };
 
     typedef struct _msg { // used in info(audio_info_callback());
         const char*           msg = nullptr;
@@ -508,30 +337,32 @@ class Audio {
 
   public:
     struct audioSettings {
-        uint16_t DMA_DESC_NUM = 16;                // i2s - dma;  number of I2S DMA buffer
-        uint16_t DMA_FRAME_NUM = 256;              // i2s - dma;  number of frames in one DMA buffer
-        uint16_t FREQ_LS_HZ = 500;                 // IIR Filter: lowshelf
-        uint16_t FREQ_PEAK_HZ = 1800;              // IIR Filter: peakingEQ
-        uint16_t FREQ_HS_HZ = 6000;                // IIR Filter: highshelf
-        float    QUALITY_SLOPE = 0.707;            // IIR Filter: quality (all shelfes)
-        bool     IIR_FILTER = true;                // IIR Filter: true -> IIR filter (highshelf, bandpass, lowshelf) are enabled
-        uint8_t  VU_BARS_ATTACK_STEP = 200;        // vu-meter:   bars rising steps
-        uint8_t  VU_BARS_RELEASE_STEP = 30;        // vu-meter:   bars falling steps
-        uint8_t  VU_BARS_HOLD_CYCLES = 1;          // vu-meter:   bars hold_cycles
-        uint8_t  VU_PEAK_ATTACK_STEP = 200;        // vu-meter:   peak rising steps
-        uint8_t  VU_PEAK_RELEASE_STEP = 10;        // vu-meter:   peak falling steps
-        uint8_t  VU_PEAK_HOLD_CYCLES = 2;          // vu-meter:   peak hold_cycles
-        bool     VU_LEVEL = false;                 // vu-meter:   true -> vu meter is enabled
-        uint8_t  SP_BARS_ATTACK_STEP = 100;        // spectrum:   bars rising steps
-        uint8_t  SP_BARS_RELEASE_STEP = 20;        // spectrum:   bars falling steps
-        uint8_t  SP_BARS_HOLD_CYCLES = 1;          // spectrum:   bars hold_cycles
-        uint8_t  SP_PEAK_ATTACK_STEP = 200;        // spectrum:   peak rising steps
-        uint8_t  SP_PEAK_RELEASE_STEP = 10;        // spectrum:   peak falling steps
-        uint8_t  SP_PEAK_HOLD_CYCLES = 2;          // spectrum:   peak hold_cycles
-        bool     SPECTRUM = false;                 // true: spectrum analyzer is enabled
-        bool     VOLUME_CONTROL = true;            // true: volume and balance control is enabled
-        float    VOL_FADING_SPEED = 50.0;          // mute, volume fading 1.0f (fast) ... 100.0f (slow)
-        uint32_t BUFFER_TRESHOLD_HLS = UINT16_MAX; // Level at which the HLS-TS stream starts and is reloaded
+        uint16_t     DMA_DESC_NUM = 16;                // i2s - dma;  number of I2S DMA buffer
+        uint16_t     DMA_FRAME_NUM = 256;              // i2s - dma;  number of frames in one DMA buffer
+        uint16_t     FREQ_LS_HZ = 500;                 // IIR Filter: lowshelf
+        uint16_t     FREQ_PEAK_HZ = 1800;              // IIR Filter: peakingEQ
+        uint16_t     FREQ_HS_HZ = 6000;                // IIR Filter: highshelf
+        float        QUALITY_SLOPE = 0.707;            // IIR Filter: quality (all shelfes)
+        bool         IIR_FILTER = true;                // IIR Filter: true -> IIR filter (highshelf, bandpass, lowshelf) are enabled
+        uint8_t      VU_BARS_ATTACK_STEP = 200;        // vu-meter:   bars rising steps
+        uint8_t      VU_BARS_RELEASE_STEP = 30;        // vu-meter:   bars falling steps
+        uint8_t      VU_BARS_HOLD_CYCLES = 1;          // vu-meter:   bars hold_cycles
+        uint8_t      VU_PEAK_ATTACK_STEP = 200;        // vu-meter:   peak rising steps
+        uint8_t      VU_PEAK_RELEASE_STEP = 10;        // vu-meter:   peak falling steps
+        uint8_t      VU_PEAK_HOLD_CYCLES = 2;          // vu-meter:   peak hold_cycles
+        bool         VU_LEVEL = false;                 // vu-meter:   true -> vu meter is enabled
+        uint8_t      SP_BARS_ATTACK_STEP = 100;        // spectrum:   bars rising steps
+        uint8_t      SP_BARS_RELEASE_STEP = 20;        // spectrum:   bars falling steps
+        uint8_t      SP_BARS_HOLD_CYCLES = 1;          // spectrum:   bars hold_cycles
+        uint8_t      SP_PEAK_ATTACK_STEP = 200;        // spectrum:   peak rising steps
+        uint8_t      SP_PEAK_RELEASE_STEP = 10;        // spectrum:   peak falling steps
+        uint8_t      SP_PEAK_HOLD_CYCLES = 2;          // spectrum:   peak hold_cycles
+        bool         SPECTRUM = false;                 // true: spectrum analyzer is enabled
+        bool         VOLUME_CONTROL = true;            // true: volume and balance control is enabled
+        float        VOL_FADING_SPEED = 50.0;          // mute, volume fading 1.0f (fast) ... 100.0f (slow)
+        uint32_t     BUFFER_TRESHOLD_HLS = UINT16_MAX; // Level at which the HLS-TS stream starts and is reloaded
+        bool         BT_SOURCE = false;                // activate Bluetooth source (only ESP32_S31)
+        ps_ptr<char> BT_DEV_NANE = "";                 // set the name of your BT speaker;
     } settings;
 
     std::atomic<uint32_t> m_dmaFreeDesc = 0;
@@ -807,9 +638,9 @@ class Audio {
     static bool info(Audio& instance, event_t e, const std::vector<uint32_t>& v, const std::vector<uint32_t>& p = {}) {
         ps_ptr<char> txt;
         switch (e) {
-            case evt_image: txt.assignf("APIC found at pos {}", v[0]); break;
-            case evt_vu: txt.assignf("l: {:03}, r: {:03}, pl: {:03}, pr: {:03}", v[0], v[1], v[2], v[3]); break;
-            case evt_spectrum:
+            case Audio::evt_image: txt.assignf("APIC found at pos {}", v[0]); break;
+            case Audio::evt_vu: txt.assignf("l: {:03}, r: {:03}, pl: {:03}, pr: {:03}", v[0], v[1], v[2], v[3]); break;
+            case Audio::evt_spectrum:
                 txt.assignf("0...14: {:03}, {:03}, {:03}, {:03}, {:03}, {:03}, {:03}, {:03}, {:03}, {:03}, {:03}, {:03}, {:03}, {:03}, {:03}", v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8],
                             v[9], v[10], v[11], v[12], v[13], v[14]);
                 break;
@@ -819,6 +650,18 @@ class Audio {
     }
     //----------------------------------------------------------------------------------------------------------------------
 
+  private:
+    static bool bt_info_callback(void* context, uint16_t event, ps_ptr<char>&& message) {
+        if (!context || !message.get()) return false;
+
+        Audio& instance = *static_cast<Audio*>(context);
+
+        int32_t number = extract_last_number(message.c_get());
+
+        return enqueueInfo(instance, static_cast<event_t>(event), std::move(message), number);
+    }
+    //----------------------------------------------------------------------------------------------------------------------
+  public:
     template <typename... Args> static void AUDIO_LOG_IMPL(uint8_t level, const char* path, int line, const char* func, const char* fmt, Args&&... args) {
 
 #define ANSI_ESC_RESET   "\033[0m"
@@ -861,7 +704,7 @@ class Audio {
         msg.msg = logStr.get();
         const char* tag[7] = {"", "LOGE", "LOGW", "LOGI", "LOGD", "LOGV", ""};
         msg.s = tag[level];
-        msg.e = evt_log;
+        msg.e = Audio::evt_log;
 
         if (audio_info_callback)
             audio_info_callback(msg);
@@ -906,8 +749,8 @@ class Decoder {
     virtual uint32_t              getOutputSamples() = 0;
     virtual int32_t               decode(uint8_t* inbuf, int32_t* bytesLeft, int32_t* outbuf1) = 0;
     virtual void                  setRawBlockParams(uint8_t param1, uint32_t param2, uint8_t param3, uint32_t param4, uint32_t param5) = 0;
-    virtual const char*           getStreamTitle();
-    virtual const char*           whoIsIt();
+    virtual const char*           getStreamTitle() = 0;
+    virtual const char*           whoIsIt() = 0;
     virtual std::vector<uint32_t> getMetadataBlockPicture() = 0;
     virtual const char*           arg1() = 0; // decoder specific
     virtual const char*           arg2() = 0; // decoder specific

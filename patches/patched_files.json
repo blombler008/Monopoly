@@ -2,41 +2,49 @@
     {
         "lib": "lvgl",
         "file": "lv_conf.h",
+        "path": "lv_conf.h",
         "patch": "lvgl_lv_conf_h.patch"
     },
     {
         "lib": "TFT_eSPI",
         "file": "TFT_eSPI.cpp",
+        "path": "TFT_eSPI.cpp",
         "patch": "TFT_eSPI_TFT_eSPI_cpp.patch"
     },
     {
         "lib": "TFT_eSPI",
         "file": "TFT_eSPI.h",
+        "path": "TFT_eSPI.h",
         "patch": "TFT_eSPI_TFT_eSPI_h.patch"
     },
     {
         "lib": "TFT_eSPI",
+        "file": "User_Setup.h",
+        "path": "User_Setup.h",
+        "patch": "TFT_eSPI_User_Setup_h.patch"
+    },
+    {
+        "lib": "TFT_eSPI",
         "file": "TFT_eSPI_ESP32_S3.c",
+        "path": "Processors/TFT_eSPI_ESP32_S3.c",
         "patch": "TFT_eSPI_TFT_eSPI_ESP32_S3_c.patch"
     },
     {
         "lib": "TFT_eSPI",
         "file": "TFT_eSPI_ESP32_S3.h",
+        "path": "Processors/TFT_eSPI_ESP32_S3.h",
         "patch": "TFT_eSPI_TFT_eSPI_ESP32_S3_h.patch"
-    },
-    {
-        "lib": "TFT_eSPI",
-        "file": "User_Setup.h",
-        "patch": "TFT_eSPI_User_Setup_h.patch"
     },
     {
         "lib": "ESP32-audioI2S",
         "file": "Audio.cpp",
+        "path": "src/Audio.cpp",
         "patch": "ESP32-audioI2S_Audio_cpp.patch"
     },
     {
         "lib": "ESP32-audioI2S",
         "file": "Audio.h",
+        "path": "src/Audio.h",
         "patch": "ESP32-audioI2S_Audio_h.patch"
     }
 ]

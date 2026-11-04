@@ -8,6 +8,12 @@
 using EventHandler = void (*)(EventId id, const void* context);
 using EventHandlerId = uint16_t;
 
+enum class EventLogLevel : uint8_t {
+    Off,
+    Events,
+    Verbose
+};
+
 constexpr EventHandlerId INVALID_HANDLER_ID = 0xFFFF;
 constexpr uint16_t MAX_SUBSCRIPTIONS = 64;
 
@@ -18,5 +24,7 @@ EventHandlerId subscribe(EventId id, EventHandler handler);
 void fire_event(EventId id, const void* context = nullptr);
 
 bool unsubscribe(EventHandlerId handlerId);
+
+void dump_events();
 
 #endif

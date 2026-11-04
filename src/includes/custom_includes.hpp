@@ -17,7 +17,12 @@
 
 // GAME LOGIC
 #include <core/Settings.h>
-#include <core/event_manager.hpp>
-#include <core/event_subscriptions.hpp>
+#include <core/event/event_manager.hpp>
+#include <core/event/event_subscriptions.hpp>
+#include <core/serial/serial_console.hpp>
+#include <core/serial/serial_registry.hpp>
+
+
+
 
 #endif
