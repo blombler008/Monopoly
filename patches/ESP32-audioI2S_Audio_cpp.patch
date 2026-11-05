@@ -1,0 +1,52 @@
+--- ".pio\\libdeps\\release\\ESP32-audioI2S\\src\\Audio.cpp"	2026-11-05 22:07:05.901930000 +0100
++++ "patches\\modified\\ESP32-audioI2S\\src\\Audio.cpp"	2026-11-05 21:07:07.871335700 +0100
+@@ -3221,15 +3221,15 @@
+                 AUDIO_LOG_DEBUG("initialisize Bluetooth source, dev name: {}", settings.BT_DEV_NANE);
+                 setOutputSampleRate(Audio::SR_44100);
+             } else {
+-                AUDIO_LOG_DEBUG("initialisize Bluetooth source failed");
++                AUDIO_LOG_ERROR("initialisize Bluetooth source failed");
+                 settings.BT_SOURCE = false;
+                 setOutputSampleRate(Audio::SR_ORIGIN);
+             }
+         }
+     } else {
+-        if (!settings.BT_SOURCE && bt_source.is_init()) {
++        if (bt_source.is_init()) {
+             bt_source.reset();
+-            AUDIO_LOG_DEBUG("deactivate Bluetooth source");
++            AUDIO_LOG_INFO("deactivate Bluetooth source");
+         }
+     }
+     // ----------------------------------------------------------------------------------------------
+@@ -3252,16 +3252,27 @@
+             //-------------------------------------------------------------------------------------------------------
+             // samples manipulation
+             //-------------------------------------------------------------------------------------------------------
+-            audio_process_raw_samples(m_i2sWorkBuff.get(), readWords);
+-
++            
++            if(audio_process_raw_samples_cb) {
++                audio_process_raw_samples_cb(m_i2sWorkBuff.get(), readWords);
++            } else {
++                audio_process_raw_samples(m_i2sWorkBuff.get(), readWords);
++            }
++ 
+             if (settings.VU_LEVEL) calculateVUlevel(m_i2sWorkBuff.get(), readWords);
+             if (settings.SPECTRUM) calculateSpectrum(m_i2sWorkBuff.get(), readWords);
+             if (settings.IIR_FILTER) IIR_filter(m_i2sWorkBuff.get(), readWords);
+             if (m_f_forceMono) stereo2mono(m_i2sWorkBuff.get(), readWords);
+             if (settings.VOLUME_CONTROL) Gain(m_i2sWorkBuff.get(), readWords);
+             if (bt_source.connected()) bt_source.getChunk(m_i2sWorkBuff.get(), readWords);
++ 
++
++            if(audio_process_i2s_cb) {
++                audio_process_i2s_cb(m_i2sWorkBuff.get(), readWords, &continueI2S);
++            } else {
++                audio_process_i2s(m_i2sWorkBuff.get(), readWords, &continueI2S);
++            }
+ 
+-            audio_process_i2s(m_i2sWorkBuff.get(), (int32_t)readWords, &continueI2S);
+             //--------------------------------------------------------------------------------------------------------
+             // m_i2sWorkBuff -> I2S
+             //--------------------------------------------------------------------------------------------------------

@@ -108,7 +108,7 @@ void dump_events() {
     log_i("");
     log_i("===== EVENT MANAGER =====");
 
-    for (uint16_t i = 0; i <= static_cast<uint16_t>(EventId::AudioBeepRequested); i++) {
+    for (uint16_t i = 0; i <= static_cast<uint16_t>(EventId::AudioMute); i++) {
         auto eventId = static_cast<EventId>(i);
 
         log_i(
