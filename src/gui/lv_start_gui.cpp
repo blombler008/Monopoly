@@ -62,7 +62,7 @@ void card_found_callback(const char* uid) {
 
     // UI zurück auf Settings oder weiter
     
-    lv_screen_load(settings_create());
+    lv_screen_load(settings);
 }
 
 // GUI Creation
@@ -75,7 +75,7 @@ void lv_create_start_gui_async(void*) {
     int lang = lv_subject_get_int(&language);
     lv_translation_set_language(lang == 0 ? "en" : "de"); // Set the language based on the subject value
     lv_subject_set_int(&rfid_audio_tags, get_rfid_audio_tags_enabled()); // Enable RFID audio tags by default
-    lv_screen_load(welcome_create());
+    lv_screen_load(welcome);
 
     set_rfid_callback(card_found_callback); // Set the RFID callback function to handle card detection events
 

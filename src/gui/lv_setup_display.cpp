@@ -158,7 +158,7 @@ void touch_read_cb(lv_indev_t * indev, lv_indev_data_t* data) {
     
     xSemaphoreTake(spi_semaphore, pdMS_TO_TICKS(1));
     // log_i(displayDriver->tft->getTouch(&x, &y, 350) ? "Touch detected" : "No touch detected"); // Log whether a touch is detected or not
-    if(displayDriver->tft->getTouch(&x, &y, 350)) { 
+    if(displayDriver->tft->getTouch(&x, &y, 220)) { 
         // Invert the touch coordinates to match the display orientation and swap x and y
         data->point.x = x;
         data->point.y = y; // Invert y coordinate to match display orientation

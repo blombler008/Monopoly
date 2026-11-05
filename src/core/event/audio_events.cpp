@@ -31,7 +31,6 @@ static void on_audio_playback(EventId id, const void* context) {
     audio_playback_stop();
 }
 
-
 static void on_audio_mute(EventId id, const void* context) {
     if(!context) audio_mute();
  
@@ -41,6 +40,7 @@ static void on_audio_mute(EventId id, const void* context) {
         audio_mute(false);
     
 }
+
 static void on_audio_beep_requested(EventId id, const void* context) {
     if (!context) return;
 
