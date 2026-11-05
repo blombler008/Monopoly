@@ -69,38 +69,6 @@ SPIClass* h_spi = new SPIClass(HSPI);
  *       before initializing it to avoid conflicts.
  */
 SPIClass* v_spi = new SPIClass(VSPI); 
-static bool s_sdAvailable = false;  // Flag to check if the SD card is ready to use
-
-bool sd_detect() { 
-    return digitalRead(SD_DETECT_PIN) == HIGH;
-}
-
-void sd_update() {
-    bool cardPresent = sd_detect();
-
-    if (cardPresent == s_sdAvailable) return;
-
-    if (cardPresent) {
-
-        if (!SD.begin(SD_CS, *v_spi, SD_SPI_SPEED)) {
-            log_e("Failed to initialize SD card");
-            return;
-        }
-
-        show_sd_info(false);
-
-        s_sdAvailable = true;
-
-        fire_event(EventId::SDCardDetected);
-        return;
-    }
-
-    SD.end();
-
-    s_sdAvailable = false;
-
-    fire_event(EventId::SDCardRemoved);
-}
 
 void create_gui() {
     lv_create_start_gui(); // Create the initial graphical user interface
@@ -110,11 +78,7 @@ void create_gui() {
 void setupMain() {  
     v_spi->begin(VSPI_SCK, VSPI_MISO, VSPI_MOSI); // Initialize the VSPI bus
     h_spi->begin(HSPI_SCK, HSPI_MISO, HSPI_MOSI); // Initialize the HSPI bus 
-   
-    pinMode(SD_STATUS_LED, OUTPUT); // Set the SD status LED pin as output 
-    digitalWrite(SD_STATUS_LED, LOW); // Turn off the SD status LED initially
-    pinMode(SD_DETECT_PIN, INPUT_PULLUP); // Set the SD card detect pin as input with pull-up resistor 
-
+    
     // Alle CS-Pins deaktivieren (HIGH = inaktiv)
     uint8_t CSPins[] = {TFT_CS, TOUCH_CS, RFID_CS, SD_CS}; // Array of chip select pins for various peripherals
 
@@ -144,22 +108,7 @@ void setupMain() {
 #endif
 
 #if USE_SD
-    digitalWrite(SD_STATUS_LED, HIGH); // Turn on the SD status LED to indicate SD card operations 
-    s_sdAvailable = sd_detect();
-    if(s_sdAvailable){
-        if(SD.begin(SD_CS, *v_spi, SD_SPI_SPEED)) { // Initialize the SD card on the VSPI bus [4 MHz] 
-            log_i("SD Card initialized successfully!"); // Log success message for SD card initialization
-            coreSettings.load();
-                
-            s_sdAvailable = true; // Set the flag indicating SD card is initialized
-            fire_event(EventId::SDCardDetected); 
-
-            show_sd_info(); // Show information about the SD card
-        } else {
-            log_e("SD Card initialization failed!"); // Log an error if SD card initialization fails
-            digitalWrite(SD_STATUS_LED, LOW); // Turn off the SD status LED to indicate failure
-        } 
-    }
+    sd_setup(v_spi);
 #endif  
 
 #if USE_AUDIO
@@ -187,39 +136,13 @@ void setup() {
 }
 
 #if tests == 0
-unsigned long last_display_time = 0;
-unsigned long last_rfid_time = 0;
- 
-void toggle_led() {
-
-    static bool lastState = false;
-
-    if (!s_sdAvailable) {
-        if (lastState) {
-            digitalWrite(SD_STATUS_LED, LOW);
-            lastState = false;
-        }
-        return;
-    }
-
-    uint32_t phase = (esp_timer_get_time() / 1000) % 500;
-    bool newState = (phase < 50);
-
-    if (newState != lastState) {
-        // if(newState) 
-            // log_i("LED state changed to %s", newState ? "HIGH" : "LOW");
-        digitalWrite(SD_STATUS_LED, newState ? HIGH : LOW);
-        lastState = newState;
-    }
-}
  
 
 void loop() { 
     // log_d("Loop begin");
     uint32_t now = esp_timer_get_time() / 1000; // Get the current time in milliseconds
-    static uint32_t last_sd = 0;
     static uint32_t last_rfid = 0;
-    static uint32_t last_led = 0;
+    static uint32_t last_sd = 0;
     static uint32_t last_loop = 0;
 
     serial_console_update();
@@ -243,10 +166,7 @@ void loop() {
         sd_update();
     }
 #endif
-
-    last_led = now;
-    toggle_led();
-
+ 
     // log_i("Loop delta at %lu ms", now-last_loop); // Log the time when the loop function is called
     last_loop = now; // Update the last loop time to the current time
 }

@@ -21,6 +21,7 @@
 #include <core/event/event_subscriptions.hpp>
 #include <core/serial/serial_console.hpp>
 #include <core/serial/serial_registry.hpp>
+#include <core/sd/sd_manager.hpp>
 
 
 
